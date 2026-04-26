@@ -1,6 +1,7 @@
 import { savePreferences, loadPreferences } from "./storage.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
+import { deleteConversation } from "./conversations.js";
 
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
@@ -137,8 +138,54 @@ function renderConversations() {
 
 conversations.forEach(conv => {
   const item = document.createElement("div");
-  item.className = "chat-item";
-  item.innerText = conv.title || "New Chat";
+  
+item.className = "chat-item";
+
+if (conv.id === currentConversation.id) {
+  item.style.background = "#2a2b32";
+}  
+item.innerHTML = "";
+
+const title = document.createElement("span");
+title.innerText = conv.title || "New Chat";
+
+const del = document.createElement("button");
+del.innerText = "x";
+del.style.float = "right";
+del.style.background = "transparent";
+del.style.color = "white";
+del.style.border = "none";
+del.style.cursor = "pointer";
+
+item.appendChild(title);
+item.appendChild(del);
+
+del.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  const isActive = currentConversation.id === conv.id;
+
+  deleteConversation(conv.id);
+
+  const remaining = getAllConversations();
+
+  if (isActive) {
+    if (remaining.length > 0) {
+      currentConversation = remaining[0];
+    } else {
+      currentConversation = createConversation();
+    }
+
+    messages = currentConversation.messages;
+
+    chat.innerHTML = "";
+    messages.forEach(m => {
+      addMessage(m.content, m.role === "user" ? "user" : "ai");
+    });
+  }
+
+  renderConversations();
+});
 
   item.addEventListener("click", () => {
     currentConversation = conv;
@@ -149,6 +196,7 @@ conversations.forEach(conv => {
     messages.forEach(m => {
       addMessage(m.content, m.role === "user" ? "user" : "ai");
     });
+      renderConversations(); // 🔥 critical fix
   });
 
   list.appendChild(item);

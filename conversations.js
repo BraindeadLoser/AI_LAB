@@ -39,3 +39,8 @@ export function updateConversation(id, messages) {
 export function getAllConversations() {
   return conversations;
 }
+
+export function deleteConversation(id) {
+  conversations = conversations.filter(c => c.id !== id);
+  saveConversations(conversations);
+}

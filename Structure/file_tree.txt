@@ -1,0 +1,15 @@
+├── .gitignore
+├── Progress Report.docx
+├── Structure/
+│   └── file_tree.txt
+├── Tools/
+├── Utility/
+│   ├── structure.py
+│   └── update_git.py
+├── conversations.js
+├── index.html
+├── main.js
+├── package-lock.json
+├── package.json
+├── renderer.js
+└── storage.js
