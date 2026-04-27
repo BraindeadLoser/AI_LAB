@@ -1,4 +1,14 @@
 ├── .gitignore
+├── Bone_Code/
+│   ├── css/
+│   ├── go/
+│   ├── html/
+│   │   └── index.html
+│   ├── js/
+│   │   ├── conversations.js
+│   │   ├── renderer.js
+│   │   └── storage.js
+│   └── python/
 ├── Progress Report.docx
 ├── Structure/
 │   └── file_tree.txt
@@ -6,10 +16,6 @@
 ├── Utility/
 │   ├── structure.py
 │   └── update_git.py
-├── conversations.js
-├── index.html
 ├── main.js
 ├── package-lock.json
-├── package.json
-├── renderer.js
-└── storage.js
+└── package.json
