@@ -8,7 +8,7 @@ function createWindow() {
     height: 800
   });
 
-  win.loadFile("index.html");
+  win.loadFile("Bone_Code/html/index.html");
 }
 
 app.whenReady().then(createWindow);
