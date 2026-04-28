@@ -46,7 +46,8 @@ function addMessage(text, type) {
 div.className = "msg " + type;
 
 if (type === "user") div.style.background = userColor;
-if (type === "ai") div.style.background = aiColor;  div.innerText = text;
+if (type === "ai") div.style.background = aiColor;  
+div.innerHTML = marked.parse(text);
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -105,7 +106,7 @@ while (true) {
 
       if (token) {
         fullText += token;
-        typingDiv.innerText = fullText;
+        typingDiv.innerHTML = marked.parse(fullText);
         chat.scrollTop = chat.scrollHeight;
       }
     } catch (e) {
@@ -142,51 +143,90 @@ conversations.forEach(conv => {
 item.className = "chat-item";
 
 if (conv.id === currentConversation.id) {
-  item.style.background = "#2a2b32";
+  item.style.background = "#0a0b14";
 }  
 item.innerHTML = "";
 
 const title = document.createElement("span");
 title.innerText = conv.title || "New Chat";
 
-const del = document.createElement("button");
-del.innerText = "x";
-del.style.float = "right";
-del.style.background = "transparent";
-del.style.color = "white";
-del.style.border = "none";
-del.style.cursor = "pointer";
+const menuBtn = document.createElement("button");
+menuBtn.innerText = "⋯"; // three horizontal dots
+menuBtn.style.float = "right";
+menuBtn.style.background = "transparent";
+menuBtn.style.color = "ccc";
+menuBtn.style.border = "none";
+menuBtn.style.cursor = "pointer";
 
 item.appendChild(title);
-item.appendChild(del);
+item.appendChild(menuBtn);
 
-del.addEventListener("click", (e) => {
+// dropdown container
+const dropdown = document.createElement("div");
+dropdown.className = "dropdown-menu";
+dropdown.style.display = "none"; // hidden by default
+dropdown.style.position = "absolute";
+dropdown.style.background = "#2a2b32";
+dropdown.style.color = "white";
+dropdown.style.padding = "5px";
+dropdown.style.borderRadius = "4px";
+
+const delOption = document.createElement("div");
+delOption.innerText = "Delete";
+delOption.onclick = (e) => {
   e.stopPropagation();
-
   const isActive = currentConversation.id === conv.id;
-
   deleteConversation(conv.id);
 
   const remaining = getAllConversations();
-
   if (isActive) {
-    if (remaining.length > 0) {
-      currentConversation = remaining[0];
-    } else {
-      currentConversation = createConversation();
-    }
-
+    currentConversation = remaining.length > 0 ? remaining[0] : createConversation();
     messages = currentConversation.messages;
-
     chat.innerHTML = "";
-    messages.forEach(m => {
-      addMessage(m.content, m.role === "user" ? "user" : "ai");
-    });
+    messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "ai"));
   }
-
   renderConversations();
-});
+};
 
+// rename option
+const renameOption = document.createElement("div");
+renameOption.innerText = "Rename";
+renameOption.onclick = (e) => {
+  e.stopPropagation();
+
+  // create inline input
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = conv.title || "New Chat";
+  input.style.width = "120px";
+
+  // replace renameOption with input temporarily
+  dropdown.replaceChild(input, renameOption);
+  // prevent dropdown from closing when clicking inside input
+  input.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+  });
+  // handle Enter key
+  input.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      const newTitle = input.value.trim();
+      if (newTitle !== "") {
+        conv.title = newTitle;
+        updateConversation(conv.id, messages);
+        renderConversations();
+      }
+    }
+  });
+};
+dropdown.appendChild(delOption);
+dropdown.appendChild(renameOption);
+item.appendChild(dropdown);
+
+// toggle dropdown on menuBtn click
+menuBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+});
   item.addEventListener("click", () => {
     currentConversation = conv;
     messages = conv.messages;
@@ -197,11 +237,19 @@ del.addEventListener("click", (e) => {
       addMessage(m.content, m.role === "user" ? "user" : "ai");
     });
       renderConversations(); // 🔥 critical fix
+      dropdown.style.display = "none";
   });
 
   list.appendChild(item);
 });
 }
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".dropdown-menu") && !e.target.closest("button")) {
+    document.querySelectorAll(".dropdown-menu").forEach(menu => {
+      menu.style.display = "none";
+    });
+  }
+});
 
 function togglePanel() {
   const panel = document.getElementById("panel");
@@ -262,13 +310,14 @@ function applyColors() {
     document.body.style.background = bgColor;
 
     // update existing messages
-    document.querySelectorAll(".user").forEach(el => {
-        el.style.background = userColor;
-    });
+document.querySelectorAll(".msg.user").forEach(el => {
+  el.style.background = userColor;
+});
 
-    document.querySelectorAll(".ai").forEach(el => {
-        el.style.background = aiColor;
-    });
+document.querySelectorAll(".msg.ai").forEach(el => {
+  el.style.background = aiColor;
+});
+
 
     // ✅ SAVE
     savePreferences({

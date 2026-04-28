@@ -4,13 +4,14 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-  "start": "electron ."
-},
+    "start": "electron ."
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "electron": "^41.3.0"
+    "electron": "^41.3.0",
+    "marked": "^18.0.2"
   }
 }
