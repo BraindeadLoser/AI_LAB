@@ -13,9 +13,7 @@ const input = document.getElementById("input");
 const API_URL = "http://localhost:1234/v1/chat/completions";
 
 const allConvs = getAllConversations();
-
 let currentConversation;
-
 if (allConvs.length > 0) {
   currentConversation = allConvs[0]; // load latest
 } else {
@@ -225,7 +223,15 @@ renameOption.onclick = (e) => {
 dropdown.appendChild(delOption);
 dropdown.appendChild(renameOption);
 item.appendChild(dropdown);
-
+// Toggle console panel visibility
+document.getElementById('consoleToggleBtn').addEventListener('click', () => {
+  const consoleDiv = document.getElementById('bottom-console');
+  if (consoleDiv.style.display === 'none' || consoleDiv.style.display === '') {
+    consoleDiv.style.display = 'block';   // open
+  } else if (consoleDiv.style.display === 'block') {
+    consoleDiv.style.display = 'none';    // close
+  }
+});
 // toggle dropdown on menuBtn click
 menuBtn.addEventListener("click", (e) => {
   e.stopPropagation();
