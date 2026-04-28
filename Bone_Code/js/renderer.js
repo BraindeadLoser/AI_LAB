@@ -223,15 +223,6 @@ renameOption.onclick = (e) => {
 dropdown.appendChild(delOption);
 dropdown.appendChild(renameOption);
 item.appendChild(dropdown);
-// Toggle console panel visibility
-document.getElementById('consoleToggleBtn').addEventListener('click', () => {
-  const consoleDiv = document.getElementById('bottom-console');
-  if (consoleDiv.style.display === 'none' || consoleDiv.style.display === '') {
-    consoleDiv.style.display = 'block';   // open
-  } else if (consoleDiv.style.display === 'block') {
-    consoleDiv.style.display = 'none';    // close
-  }
-});
 // toggle dropdown on menuBtn click
 menuBtn.addEventListener("click", (e) => {
   e.stopPropagation();
@@ -311,6 +302,7 @@ function toggleSidebar() {
   }
 }
 
+
 function applyColors() {
     userColor = document.getElementById("userColor").value;
     aiColor = document.getElementById("aiColor").value;
@@ -341,6 +333,14 @@ document.getElementById("toggleBtn").addEventListener("click", toggleSidebar);
 document.getElementById("customizeBtn").addEventListener("click", togglePanel);
 document.getElementById("applyBtn").addEventListener("click", applyColors);
 document.getElementById("sendBtn").addEventListener("click", send);
+document.getElementById("consoleToggleBtn").addEventListener("click", () => {
+  const consoleDiv = document.getElementById('bottom-console');
+  if (consoleDiv.classList.contains('hidden')) {
+    consoleDiv.classList.remove('hidden');
+  } else {
+    consoleDiv.classList.add('hidden');
+  }
+});
 document.getElementById("newChatBtn").addEventListener("click", () => {
   newChat();
   renderConversations();
@@ -369,6 +369,7 @@ async function apiCall(url, options) {
     throw error;
   }
 }
+
 // After appConsole import
 // Assume aiModel is already initialized in your app
 appConsole.on('suggestions', (suggestions) => {

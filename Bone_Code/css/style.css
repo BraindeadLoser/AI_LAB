@@ -7,6 +7,10 @@ body {
   height: 100vh;
 }
 
+.hidden {
+  display: none !important;
+}
+
 #chat {
   flex: 1;
   overflow-y: auto;
@@ -167,7 +171,5 @@ body {
   border-top: 2px solid #333;
   z-index: 9999;
 }
-.hidden {
-  display: none !important;
-}
+
 
