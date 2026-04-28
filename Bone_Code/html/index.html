@@ -38,6 +38,7 @@
   <div style="display: flex; justify-content: flex-end; gap: 10px; margin: 10px;">
     <button id="toggleBtn">Toggle Sidebar</button>
     <button id="customizeBtn">Customize</button>
+    <button id="consoleToggleBtn">Toggle Console</button> <!-- NEW -->
   </div>
   <div id="chat"></div>
 
@@ -46,7 +47,20 @@
     <button id="sendBtn">Send</button>
   </div>
 </div>
-
+<div id="ai-suggestions"
+     style="max-height:150px; overflow:auto; background:#222; color:#fff;
+            font-size:12px; padding:5px; border-top:1px solid #555;">
+  <!-- AI recommendations will appear here -->
+</div>
+<!-- Bottom console panel -->
+<div id="bottom-console"
+     style="display:none; position:fixed; bottom:0; left:0; right:0;
+            height:200px; overflow:auto;
+            background:#111; color:#0f0;
+            font-size:12px; padding:5px;
+            border-top:2px solid #333; z-index:9999;">
+  <!-- Logs will appear here -->
+</div>
 <script type="module" src="../js/storage.js"></script>
 <script type="module" src="../js/conversations.js"></script>
 <script type="module" src="../js/renderer.js"></script>

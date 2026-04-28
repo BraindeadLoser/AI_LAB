@@ -6,10 +6,14 @@
 │   ├── html/
 │   │   └── index.html
 │   ├── js/
+│   │   ├── aiConnector.js
+│   │   ├── console.js
 │   │   ├── conversations.js
+│   │   ├── logPipeline.js
 │   │   ├── renderer.js
 │   │   └── storage.js
 │   └── python/
+├── Dockerfile
 ├── Progress Report.docx
 ├── README.md
 ├── Structure/
@@ -19,7 +23,7 @@
 ├── Utility/
 │   ├── structure.py
 │   └── update_git.py
+├── docker-compose.yml
 ├── main.js
 ├── package-lock.json
-├── package.json
-└── ~$ogress Report.docx
+└── package.json

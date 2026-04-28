@@ -1,8 +1,12 @@
+import AIConnector from './aiConnector.js';
+import appConsole from './console.js';
+import LogPipeline from './logPipeline.js';
 import { savePreferences, loadPreferences } from "./storage.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
-
+const aiConnector = new AIConnector("http://127.0.0.1:1234", "dolphin-x1-8b");
+const pipeline = new LogPipeline(aiConnector);
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
@@ -338,3 +342,36 @@ document.getElementById("newChatBtn").addEventListener("click", () => {
 window.newChat = newChat;
 window.getAllConversations = getAllConversations;
 renderConversations();
+// --- AppConsole hooks ---
+document.addEventListener('click', (e) => {
+  appConsole.log('UI_EVENT', 'click', { target: e.target.id || e.target.tagName });
+});
+
+window.addEventListener('error', (err) => {
+  appConsole.log('ERROR', 'runtime', { message: err.message, stack: err.error?.stack });
+});
+
+async function apiCall(url, options) {
+  appConsole.log('API_CALL', 'request', { url, options });
+  try {
+    const res = await fetch(url, options);
+    const data = await res.json();
+    appConsole.log('API_CALL', 'response', { url, status: res.status });
+    return data;
+  } catch (error) {
+    appConsole.log('ERROR', 'api', { url, message: error.message });
+    throw error;
+  }
+}
+// After appConsole import
+// Assume aiModel is already initialized in your app
+appConsole.on('suggestions', (suggestions) => {
+  const panel = document.getElementById('ai-suggestions');
+  if (!panel) return;
+  panel.innerHTML = ''; // clear old
+  suggestions.forEach(s => {
+    const item = document.createElement('div');
+    item.textContent = `💡 ${s.message}`;
+    panel.appendChild(item);
+  });
+});
