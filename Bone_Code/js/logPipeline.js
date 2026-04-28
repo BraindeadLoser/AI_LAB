@@ -1,16 +1,25 @@
 // logPipeline.js
 export default class LogPipeline {
-  constructor(aiModel) {
-    this.aiModel = aiModel;
+  constructor(aiModelUrl) {
+    this.aiModelUrl = aiModelUrl; // e.g. "http://127.0.0.1:1234"
     this.buffer = [];
     this.maxBufferSize = 10; // adjust as needed
   }
 
-  // Add a new log entry to the buffer
+  // Add a new log entry to buffer and console
   add(entry) {
     this.buffer.push(entry);
 
-    // If buffer is full, flush to AI
+    // Render to bottom console panel
+    const consoleDiv = document.getElementById('bottom-console');
+    if (consoleDiv) {
+      const line = document.createElement('div');
+      line.textContent = `[${entry.source}] ${JSON.stringify(entry.payload)}`;
+      consoleDiv.appendChild(line);
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+    // Auto-flush if buffer full
     if (this.buffer.length >= this.maxBufferSize) {
       this.flush();
     }
@@ -24,11 +33,25 @@ export default class LogPipeline {
     this.buffer = [];
 
     try {
-      const suggestions = await this.aiModel.analyzeLogs(batch);
+      const response = await fetch(this.aiModelUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: `Analyze these logs:\n${JSON.stringify(batch, null, 2)}`,
+          max_tokens: 200
+        })
+      });
+
+      const data = await response.json();
+
       // Emit suggestions event for renderer to consume
-      document.dispatchEvent(new CustomEvent('suggestions', { detail: suggestions }));
+      if (data && data.output) {
+        document.dispatchEvent(
+          new CustomEvent("suggestions", { detail: data.output })
+        );
+      }
     } catch (err) {
-      console.error('Pipeline flush error:', err);
+      console.error("Pipeline flush error:", err);
     }
   }
 }

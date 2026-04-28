@@ -1,37 +1,27 @@
 // aiConnector.js
 export default class AIConnector {
-  constructor(baseUrl, modelName) {
-    this.baseUrl = baseUrl;
-    this.modelName = modelName;
+  constructor(baseUrl) {
+    this.baseUrl = baseUrl; // e.g. "http://127.0.0.1:1234"
   }
 
-  async requestSuggestions(logBatch) {
-    const response = await fetch(`${this.baseUrl}/v1/completions`, {
+  // Generic send method for chat or single log
+  async send(prompt) {
+    const response = await fetch(this.baseUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: this.modelName,
-        prompt: `Analyze these logs and suggest code improvements:\n${JSON.stringify(logBatch, null, 2)}`,
+        prompt,
         max_tokens: 200
       })
     });
 
     const data = await response.json();
-    return data.choices?.[0]?.text || "No suggestion returned.";
+    return data.output || data; // LM Studio returns { output: "..."}
   }
 
-  async chat(prompt) {
-    const response = await fetch(`${this.baseUrl}/v1/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: this.modelName,
-        prompt,
-        max_tokens: 300
-      })
-    });
-
-    const data = await response.json();
-    return data.choices?.[0]?.text || "No reply.";
+  // Specialized method for log batches
+  async analyzeLogs(batch) {
+    const prompt = `Analyze these logs:\n${JSON.stringify(batch, null, 2)}`;
+    return await this.send(prompt);
   }
 }
