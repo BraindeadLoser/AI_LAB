@@ -171,5 +171,20 @@ body {
   border-top: 2px solid #333;
   z-index: 9999;
 }
+#devToggle {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+    font-weight: 500;
+}
 
+.dev-off {
+    background-color: blue;
+}
+
+.dev-on {
+    background-color: green;
+}
 

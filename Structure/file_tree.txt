@@ -6,10 +6,11 @@
 │   ├── html/
 │   │   └── index.html
 │   ├── js/
+│   │   ├── aiBridge.js
 │   │   ├── aiConnector.js
 │   │   ├── console.js
 │   │   ├── conversations.js
-│   │   ├── logPipeline.js
+│   │   ├── logSystem.js
 │   │   ├── renderer.js
 │   │   └── storage.js
 │   └── python/

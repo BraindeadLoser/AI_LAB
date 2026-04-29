@@ -1,16 +1,17 @@
 import AIConnector from './aiConnector.js';
-import appConsole from './console.js';
-import LogPipeline from './logPipeline.js';
+import { setDevMode, initErrorLogging, displayAllLogs, logEvent } from "./logSystem.js";
 import { savePreferences, loadPreferences } from "./storage.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
-const aiConnector = new AIConnector("http://127.0.0.1:1234", "dolphin-x1-8b");
-const pipeline = new LogPipeline(aiConnector);
+const aiConnector = new AIConnector("http://127.0.0.1:1234/v1/chat/completions", "dolphin-x1-8b");
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
 const API_URL = "http://localhost:1234/v1/chat/completions";
+
+// Message sequence tracking for JSON logs
+let messageSeq = 0;
 
 const allConvs = getAllConversations();
 let currentConversation;
@@ -52,6 +53,13 @@ if (type === "ai") div.style.background = aiColor;
 div.innerHTML = marked.parse(text);
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
+  
+  // Log message in JSON format
+  if (type === "user") {
+    logEvent({ type: 'user_message', seq: messageSeq++, data: { content: text } });
+  } else if (type === "ai") {
+    logEvent({ type: 'ai_response', seq: messageSeq++, data: { content: text } });
+  }
 }
 
 async function send() {
@@ -119,8 +127,10 @@ while (true) {
 
 messages.push({ role: "assistant", content: fullText });
 updateConversation(currentConversation.id, messages);
+addMessage(fullText, "ai");
 
 } catch (err) {
+  logEvent({ type: 'error', data: { message: "LM Studio not reachable", source: "fetch_api", line: 0, column: 0, stack: err.stack } });
   messages.pop(); // remove last user message
   updateConversation(currentConversation.id, messages);
   typingDiv.innerText = "Error: LM Studio not reachable";
@@ -129,8 +139,9 @@ updateConversation(currentConversation.id, messages);
 function newChat() {
   currentConversation = createConversation();
   messages = currentConversation.messages;
-
+  messageSeq = 0;
   chat.innerHTML = "";
+  logEvent({ type: 'ui_click', data: { target: 'new_chat_button' } });
 }
 
 function renderConversations() {
@@ -178,12 +189,14 @@ delOption.innerText = "Delete";
 delOption.onclick = (e) => {
   e.stopPropagation();
   const isActive = currentConversation.id === conv.id;
+  logEvent({ type: 'ui_click', data: { target: 'delete_conversation' } });
   deleteConversation(conv.id);
 
   const remaining = getAllConversations();
   if (isActive) {
     currentConversation = remaining.length > 0 ? remaining[0] : createConversation();
     messages = currentConversation.messages;
+    messageSeq = 0;
     chat.innerHTML = "";
     messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "ai"));
   }
@@ -213,6 +226,7 @@ renameOption.onclick = (e) => {
     if (ev.key === "Enter") {
       const newTitle = input.value.trim();
       if (newTitle !== "") {
+        logEvent({ type: 'ui_click', data: { target: 'rename_conversation' } });
         conv.title = newTitle;
         updateConversation(conv.id, messages);
         renderConversations();
@@ -231,7 +245,8 @@ menuBtn.addEventListener("click", (e) => {
   item.addEventListener("click", () => {
     currentConversation = conv;
     messages = conv.messages;
-
+    messageSeq = 0;
+    logEvent({ type: 'ui_click', data: { target: 'conversation_item' } });
     chat.innerHTML = "";
 
     messages.forEach(m => {
@@ -285,6 +300,7 @@ enableResize();
 input.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
+    logEvent({ type: 'ui_click', data: { target: 'send_button' } });
     send();
   }
 });
@@ -292,6 +308,7 @@ input.addEventListener("keydown", function (e) {
 function toggleSidebar() {
   const sidebar = document.getElementById("sidebar");
   const main = document.getElementById("main");
+  logEvent({ type: 'ui_click', data: { target: 'toggle_sidebar' } });
 
   if (sidebar.style.display === "none") {
     sidebar.style.display = "block";
@@ -345,40 +362,29 @@ document.getElementById("newChatBtn").addEventListener("click", () => {
   newChat();
   renderConversations();
 });
+
+const devBtn = document.getElementById("devToggle");
+let devState = false;
+
+devBtn.addEventListener("click", () => {
+    devState = !devState;
+    setDevMode(devState);
+    logEvent({ type: 'ui_click', data: { target: 'dev_toggle_button' } });
+    if (devState) {
+        initErrorLogging();
+        displayAllLogs();
+        devBtn.classList.remove("dev-off");
+        devBtn.classList.add("dev-on");
+    } else {
+        devBtn.classList.remove("dev-on");
+        devBtn.classList.add("dev-off");
+        const consoleDiv = document.getElementById("bottom-console");
+        if (consoleDiv) {
+            consoleDiv.innerHTML = "";
+        }
+    }
+});
+
 window.newChat = newChat;
 window.getAllConversations = getAllConversations;
 renderConversations();
-// --- AppConsole hooks ---
-document.addEventListener('click', (e) => {
-  appConsole.log('UI_EVENT', 'click', { target: e.target.id || e.target.tagName });
-});
-
-window.addEventListener('error', (err) => {
-  appConsole.log('ERROR', 'runtime', { message: err.message, stack: err.error?.stack });
-});
-
-async function apiCall(url, options) {
-  appConsole.log('API_CALL', 'request', { url, options });
-  try {
-    const res = await fetch(url, options);
-    const data = await res.json();
-    appConsole.log('API_CALL', 'response', { url, status: res.status });
-    return data;
-  } catch (error) {
-    appConsole.log('ERROR', 'api', { url, message: error.message });
-    throw error;
-  }
-}
-
-// After appConsole import
-// Assume aiModel is already initialized in your app
-appConsole.on('suggestions', (suggestions) => {
-  const panel = document.getElementById('ai-suggestions');
-  if (!panel) return;
-  panel.innerHTML = ''; // clear old
-  suggestions.forEach(s => {
-    const item = document.createElement('div');
-    item.textContent = `💡 ${s.message}`;
-    panel.appendChild(item);
-  });
-});
