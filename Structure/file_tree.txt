@@ -10,7 +10,6 @@
 │   │   ├── console.js
 │   │   ├── conversations.js
 │   │   ├── logSystem.js
-│   │   ├── logSystem2.js
 │   │   ├── renderer.js
 │   │   └── storage.js
 │   └── python/
