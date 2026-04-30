@@ -6,14 +6,17 @@
 │   ├── html/
 │   │   └── index.html
 │   ├── js/
-│   │   ├── aiBridge.js
-│   │   ├── aiConnector.js
+│   │   ├── Bridge.js
 │   │   ├── console.js
 │   │   ├── conversations.js
 │   │   ├── logSystem.js
+│   │   ├── logSystem2.js
 │   │   ├── renderer.js
 │   │   └── storage.js
 │   └── python/
+├── Database/
+│   ├── db.js
+│   └── log_events.db
 ├── Dockerfile
 ├── Progress Report.docx
 ├── README.md
@@ -27,4 +30,5 @@
 ├── docker-compose.yml
 ├── main.js
 ├── package-lock.json
-└── package.json
+├── package.json
+└── preload.js

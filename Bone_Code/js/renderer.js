@@ -1,14 +1,32 @@
-import AIConnector from './aiConnector.js';
-import { setDevMode, initErrorLogging, displayAllLogs, logEvent } from "./logSystem.js";
 import { savePreferences, loadPreferences } from "./storage.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
-const aiConnector = new AIConnector("http://127.0.0.1:1234/v1/chat/completions", "dolphin-x1-8b");
+
+// IPC logging functions (communicates with main process)
+const logSystem = {
+  enableDevelopMode: () => window.ipc?.enableDevelopMode(),
+  disableDevelopMode: () => window.ipc?.disableDevelopMode(),
+  addLog: (entry) => window.ipc?.addLog(entry),
+  getLogs: () => window.ipc?.getLogs(),
+  captureUserMessage: (content, index) => {
+    logSystem.addLog({
+      type: 'USER_MESSAGE',
+      event: `message_${index}`,
+      details: { content, number: index }
+    });
+  },
+  captureAIMessage: (content, index) => {
+    logSystem.addLog({
+      type: 'AI_MESSAGE',
+      event: `message_${index}`,
+      details: { content, number: index }
+    });
+  }
+};
+
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
-
-const API_URL = "http://localhost:1234/v1/chat/completions";
 
 // Message sequence tracking for JSON logs
 let messageSeq = 0;
@@ -73,67 +91,20 @@ async function send() {
 
 const typingDiv = document.createElement("div");
 typingDiv.className = "msg ai";
-typingDiv.style.background = aiColor; // ✅ add this
+typingDiv.style.background = aiColor;
 typingDiv.innerText = "...";
   chat.appendChild(typingDiv);
   chat.scrollTop = chat.scrollHeight;
 
 try {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "dolphin-x1-8b",
-      messages: messages,
-      stream: true
-    })
-  });
-
-const reader = res.body.getReader();
-const decoder = new TextDecoder("utf-8");
-
-let fullText = "";
-
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-
-  const chunk = decoder.decode(value, { stream: true });
-  const lines = chunk.split("\n");
-
-  for (let line of lines) {
-    if (!line.startsWith("data: ")) continue;
-
-    const data = line.replace("data: ", "").trim();
-
-    if (data === "[DONE]") break;
-
-    try {
-      const json = JSON.parse(data);
-      const token = json.choices[0].delta?.content;
-
-      if (token) {
-        fullText += token;
-        typingDiv.innerHTML = marked.parse(fullText);
-        chat.scrollTop = chat.scrollHeight;
-      }
-    } catch (e) {
-      // ignore bad chunks
-    }
-  }
-}
-
-messages.push({ role: "assistant", content: fullText });
-updateConversation(currentConversation.id, messages);
-addMessage(fullText, "ai");
+  // AI query logic removed - Bridge.js sanitized
+  typingDiv.innerText = "Bridge logic removed";
 
 } catch (err) {
-  logEvent({ type: 'error', data: { message: "LM Studio not reachable", source: "fetch_api", line: 0, column: 0, stack: err.stack } });
-  messages.pop(); // remove last user message
+  logEvent({ type: 'error', data: { message: "Error in send function", stack: err.stack } });
+  messages.pop();
   updateConversation(currentConversation.id, messages);
-  typingDiv.innerText = "Error: LM Studio not reachable";
+  typingDiv.innerText = "Error occurred";
 }
 }
 function newChat() {
@@ -368,14 +339,14 @@ let devState = false;
 
 devBtn.addEventListener("click", () => {
     devState = !devState;
-    setDevMode(devState);
-    logEvent({ type: 'ui_click', data: { target: 'dev_toggle_button' } });
+    
     if (devState) {
-        initErrorLogging();
-        displayAllLogs();
+        logSystem.enableDevelopMode();
         devBtn.classList.remove("dev-off");
         devBtn.classList.add("dev-on");
+        logSystem.addLog({ type: 'DEV_MODE', event: 'enabled', details: { status: 'on' } });
     } else {
+        logSystem.disableDevelopMode();
         devBtn.classList.remove("dev-on");
         devBtn.classList.add("dev-off");
         const consoleDiv = document.getElementById("bottom-console");
