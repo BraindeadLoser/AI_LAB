@@ -86,8 +86,99 @@ typingDiv.innerText = "...";
   chat.scrollTop = chat.scrollHeight;
 
 try {
-  // AI query logic removed - Bridge.js sanitized
-  typingDiv.innerText = "Bridge logic removed";
+  // Step 1: Build bridge context
+  const bridge = await buildBridgeContext(msg);
+
+  // Step 2: Base system rules
+  let systemRules = `
+You are an AI assistant.
+
+Logs are background context.
+Do NOT mention logs unless explicitly asked.
+Use them only if relevant.
+`;
+
+  // Step 3: Modify rules if active mode
+  if (bridge.mode === "active") {
+    systemRules += `
+You MAY analyze logs if useful.
+`;
+  }
+
+  // Step 4: Construct messages
+  const finalMessages = [
+    {
+      role: "system",
+      content: systemRules
+    }
+  ];
+
+  // Step 5: Inject logs ONLY if present
+  if (bridge.logs.length > 0) {
+    finalMessages.push({
+      role: "system",
+      content: `BACKGROUND_LOGS:${JSON.stringify(bridge.logs)}`
+    });
+  }
+
+  // Step 6: Add conversation history (important: keep your existing messages[])
+  finalMessages.push(...messages);
+
+  // Step 7: Send to model
+  const response = await fetch("http://127.0.0.1:1234/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: finalMessages,
+      stream: true
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let aiResponse = "";
+  let firstChunk = true;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value);
+    const lines = chunk.split('\n');
+
+    for (const line of lines) {
+      if (line.startsWith('data:')) {
+        const jsonStr = line.slice(5).trim();
+        if (jsonStr === '[DONE]') continue;
+
+        try {
+          const json = JSON.parse(jsonStr);
+          const content = json.choices?.[0]?.delta?.content || '';
+          if (content) {
+            aiResponse += content;
+            if (firstChunk) {
+              typingDiv.innerText = content;
+              firstChunk = false;
+            } else {
+              typingDiv.innerText += content;
+            }
+            chat.scrollTop = chat.scrollHeight;
+          }
+        } catch (e) {
+          // Ignore parsing errors on stream chunks
+        }
+      }
+    }
+  }
+
+  // Add AI response to messages and save
+  messages.push({ role: "assistant", content: aiResponse });
+  updateConversation(currentConversation.id, messages);
+  captureAIMessage(aiResponse, messageSeq++);
 
 } catch (err) {
   logEvent({ type: 'error', data: { message: "Error in send function", stack: err.stack } });
@@ -336,39 +427,35 @@ async function updateDevelopMode(enabled) {
     try {
         if (enabled) {
             // Enable develop mode in main process
-          await enableDevMode();
-const result = { success: true };
-            if (result?.success) {
-                // Sync console singleton
-                customConsole.setDevelopMode(true);
-                // Update UI
-                devBtn.classList.remove("dev-off");
-                devBtn.classList.add("dev-on");
-                if (consoleDiv) {
-                    consoleDiv.classList.remove("hidden");
-                }
-                devState = true;
-                // Log the mode change (will be captured now)
-                logEvent({ type: 'DEV_MODE', data: { status: 'enabled', timestamp: new Date().toISOString() } });
-                console.log("[DevMode] ✓ Develop mode ENABLED - All logging active");
+            await enableDevMode();
+            
+            // Sync console singleton
+            customConsole.setDevelopMode(true);
+            // Update UI
+            devBtn.classList.remove("dev-off");
+            devBtn.classList.add("dev-on");
+            if (consoleDiv) {
+                consoleDiv.classList.remove("hidden");
             }
+            devState = true;
+            // Log the mode change (will be captured now)
+            logEvent({ type: 'DEV_MODE', data: { status: 'enabled', timestamp: new Date().toISOString() } });
+            console.log("[DevMode] ✓ Develop mode ENABLED - All logging active");
         } else {
             // Disable develop mode in main process
-await disableDevMode();
-const result = { success: true };
-            if (result?.success) {
-                // Sync console singleton
-                customConsole.setDevelopMode(false);
-                // Update UI
-                devBtn.classList.remove("dev-on");
-                devBtn.classList.add("dev-off");
-                if (consoleDiv) {
-                    consoleDiv.classList.add("hidden");
-                    consoleDiv.innerHTML = ""; // Clear logs
-                }
-                devState = false;
-                console.log("[DevMode] ✓ Develop mode DISABLED - Logging paused");
+            await disableDevMode();
+            
+            // Sync console singleton
+            customConsole.setDevelopMode(false);
+            // Update UI
+            devBtn.classList.remove("dev-on");
+            devBtn.classList.add("dev-off");
+            if (consoleDiv) {
+                consoleDiv.classList.add("hidden");
+                consoleDiv.innerHTML = ""; // Clear logs
             }
+            devState = false;
+            console.log("[DevMode] ✓ Develop mode DISABLED - Logging paused");
         }
     } catch (err) {
         console.error("[DevMode] Error updating develop mode:", err);

@@ -6,11 +6,6 @@ contextBridge.exposeInMainWorld("ipc", {
   disableDevelopMode: () => ipcRenderer.invoke("disable-develop-mode"),
   getDevelopMode: () => ipcRenderer.invoke("get-develop-mode"),
   addLog: (entry) => ipcRenderer.invoke("add-log", entry),
-  getLogs: (limit) => ipcRenderer.invoke("get-logs", limit)
-});
-const { contextBridge, ipcRenderer } = require("electron");
-
-contextBridge.exposeInMainWorld("ipc", {
-  getDevelopMode: () => ipcRenderer.invoke("get-develop-mode"),
+  getLogs: (limit) => ipcRenderer.invoke("get-logs", limit),
   getRecentLogs: (limit) => ipcRenderer.invoke("get-logs", limit)
 });
