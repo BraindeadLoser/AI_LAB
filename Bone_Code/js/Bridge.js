@@ -1,186 +1,161 @@
 /**
- * Bridge.js - AI Model Interface with Development Mode Isolation
- * 
- * This module bridges the application with the AI model (dolphin-x1-8b) at LMStudio
- * with a clear separation between development logs and normal chat messages.
- * 
- * DESIGN PRINCIPLE:
- * - When devMode = OFF: Only user messages are sent to AI (normal chat)
- * - When devMode = ON: User messages + development logs are sent as context
+ * Bridge.js
+ * ----------------------------------------
+ * Purpose:
+ * Acts as a controlled "context bridge" between:
+ *   - SQLite logs (via Electron main process)
+ *   - AI model input (renderer → LM Studio)
+ *
+ * Responsibilities:
+ *   1. Request recent logs via IPC
+ *   2. Normalize + compress logs
+ *   3. Determine usage mode (passive / active)
+ *   4. Output structured, token-efficient context
+ *
+ * IMPORTANT ARCHITECTURE RULE:
+ * - NO direct database access here
+ * - All DB reads must go through preload → IPC → main
  */
-
-const LM_STUDIO_URL = "http://127.0.0.1:1234/v1/chat/completions";
-const MODEL = "dolphin-x1-8b";
-
-let isDevMode = false;
-let logs = [];
 
 /**
- * Set development mode state
- * @param {boolean} state - true to enable dev mode, false to disable
+ * Configuration constants
  */
-export function setAIBridgeDevMode(state) {
-    isDevMode = state;
-    console.log(`[Bridge] Dev Mode: ${isDevMode ? "ON" : "OFF"}`);
-}
+const MAX_LOGS = 10;          // Hard cap to prevent token explosion
+const MAX_DETAIL_LENGTH = 30; // Max characters for compressed details
 
 /**
- * Get current development mode state
- * @returns {boolean}
+ * Entry point: Build bridge payload
+ * @param {string} userInput - raw user message
+ * @returns {Promise<Object>} structured bridge output
  */
-export function getAIBridgeDevMode() {
-    return isDevMode;
-}
+export async function buildBridgeContext(userInput) {
+  try {
+    const isDevMode = await window.ipc.getDevelopMode();
 
-/**
- * Update logs for AI context (only used when devMode is ON)
- * @param {Array} logArray - Array of log events from logSystem
- */
-export function updateBridgeLogs(logArray) {
-    if (isDevMode) {
-        logs = logArray;
-    }
-}
-
-/**
- * Format logs into a development context message
- * @returns {string} Formatted logs as text
- */
-function formatDevLogs() {
-    if (!isDevMode || logs.length === 0) return "";
-
-    const logText = logs
-        .map(log => {
-            const time = new Date(log.timestamp).toLocaleTimeString();
-            const seq = log.seq !== null && log.seq !== undefined ? `[#${log.seq}] ` : "";
-            const data = log.data.content || JSON.stringify(log.data);
-            return `[${time}] ${seq}${log.type.toUpperCase()}: ${data}`;
-        })
-        .join("\n");
-
-    return `\n---DEV LOGS---\n${logText}\n---END DEV LOGS---`;
-}
-
-/**
- * Build messages array for AI
- * When devMode is ON: includes development logs as system context
- * When devMode is OFF: sends only the regular conversation
- * 
- * @param {Array} conversationMessages - Regular chat messages
- * @returns {Array} Messages formatted for AI model
- */
-function buildAIMessages(conversationMessages) {
-    const messages = [];
-
-    // If dev mode is ON, inject development logs as system context
-    if (isDevMode && logs.length > 0) {
-        messages.push({
-            role: "system",
-            content: `You are an assistant. You have access to development logs for context:\n${formatDevLogs()}\n\nHelp the user with their message while using this context if relevant.`
-        });
+    if (!isDevMode) {
+      return { mode: "passive", logs: [] };
     }
 
-    // Add all conversation messages
-    messages.push(...conversationMessages);
+    const rawLogs = await window.ipc.getRecentLogs(10);
 
-    return messages;
-}
+    // Step 1: Determine mode based on user intent
+    const mode = detectMode(userInput);
 
-/**
- * Send message to AI model
- * Automatically includes development logs if devMode is ON
- * 
- * @param {Array} conversationMessages - Current conversation messages
- * @returns {Promise<ReadableStreamDefaultReader>} Reader for streaming response
- */
-export async function sendToAI(conversationMessages) {
-    const messages = buildAIMessages(conversationMessages);
+    // Step 2: Normalize logs (already fetched above)
 
-    console.log(`[Bridge] Sending to AI - DevMode: ${isDevMode}, Messages: ${messages.length}, Logs: ${logs.length}`);
+    // Step 3: Normalize + compress logs
+    const logs = rawLogs.map(normalizeLog);
 
-    const response = await fetch(LM_STUDIO_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: MODEL,
-            messages: messages,
-            stream: true
-        })
-    });
-
-    if (!response.ok) {
-        throw new Error(`LM Studio error: ${response.status} ${response.statusText}`);
-    }
-
-    return response.body.getReader();
-}
-
-/**
- * Decode streaming response from AI
- * @param {ReadableStreamDefaultReader} reader - Stream reader
- * @returns {Promise<string>} Complete AI response
- */
-export async function decodeAIStream(reader) {
-    const decoder = new TextDecoder("utf-8");
-    let fullText = "";
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (let line of lines) {
-            if (!line.startsWith("data: ")) continue;
-
-            const data = line.replace("data: ", "").trim();
-            if (data === "[DONE]") break;
-
-            try {
-                const json = JSON.parse(data);
-                const token = json.choices[0].delta?.content;
-                if (token) {
-                    fullText += token;
-                }
-            } catch (e) {
-                // ignore bad chunks
-            }
-        }
-    }
-
-    return fullText;
-}
-
-/**
- * Complete AI request-response cycle
- * Handles streaming and error management
- * 
- * @param {Array} conversationMessages - Current conversation
- * @returns {Promise<string>} Complete AI response
- */
-export async function queryAI(conversationMessages) {
-    try {
-        const reader = await sendToAI(conversationMessages);
-        return await decodeAIStream(reader);
-    } catch (error) {
-        console.error("[Bridge] AI query failed:", error);
-        throw error;
-    }
-}
-
-/**
- * Get Bridge status (for debugging)
- * @returns {Object} Current Bridge state
- */
-export function getBridgeStatus() {
+    // Step 4: Return structured payload
     return {
-        devMode: isDevMode,
-        logsCount: logs.length,
-        model: MODEL,
-        server: LM_STUDIO_URL,
-        timestamp: new Date().toISOString()
+      mode,
+      logs
     };
+
+  } catch (error) {
+    console.error("Bridge.js error:", error);
+
+    // Fail-safe: never break chat flow
+    return {
+      mode: "passive",
+      logs: []
+    };
+  }
+}
+
+/**
+ * Detect whether logs should be actively used
+ * @param {string} input
+ * @returns {"passive" | "active"}
+ */
+function detectMode(input) {
+  const triggers = ["log", "error", "debug", "issue", "problem"];
+
+  const lower = input.toLowerCase();
+
+  // If user explicitly refers to logs → active mode
+  const isActive = triggers.some(word => lower.includes(word));
+
+  return isActive ? "active" : "passive";
+}
+
+/**
+ * Normalize and compress a single log entry
+ * @param {Object} log - raw DB log row
+ * @returns {Object} compressed log object
+ */
+function normalizeLog(log) {
+  return {
+    t: compressTimestamp(log.timestamp),
+    type: normalizeType(log.type),
+    event: log.event,
+    d: compressDetails(log.type, log.details)
+  };
+}
+
+/**
+ * Convert ISO timestamp → short time (HH:MM:SS)
+ */
+function compressTimestamp(ts) {
+  try {
+    const date = new Date(ts);
+    return date.toTimeString().split(" ")[0]; // "08:37:10"
+  } catch {
+    return "00:00:00"; // fallback
+  }
+}
+
+/**
+ * Normalize type field (reduce verbosity)
+ */
+function normalizeType(type) {
+  switch (type) {
+    case "CLICK": return "click";
+    case "AI_MESSAGE": return "ai";
+    case "USER_MESSAGE": return "user";
+    case "ERROR": return "error";
+    default: return type.toLowerCase();
+  }
+}
+
+/**
+ * Compress details field based on log type
+ * @param {string} type
+ * @param {string|Object} details
+ */
+function compressDetails(type, details) {
+  try {
+    // Ensure details is parsed JSON
+    const parsed = typeof details === "string" ? JSON.parse(details) : details;
+
+    switch (type) {
+      case "CLICK":
+        return `target:${parsed.target || "unknown"}`;
+
+      case "AI_MESSAGE":
+        return `msg:${shorten(parsed.content)}`;
+
+      case "USER_MESSAGE":
+        return `msg:${shorten(parsed.content)}`;
+
+      case "ERROR":
+        return `err:${shorten(parsed.message || parsed.error || "unknown")}`;
+
+      default:
+        return shorten(JSON.stringify(parsed));
+    }
+
+  } catch {
+    return "invalid_details";
+  }
+}
+
+/**
+ * Hard truncate text to control token usage
+ */
+function shorten(text) {
+  if (!text) return "";
+  return text.length > MAX_DETAIL_LENGTH
+    ? text.slice(0, MAX_DETAIL_LENGTH)
+    : text;
 }

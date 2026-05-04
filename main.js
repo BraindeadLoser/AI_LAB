@@ -76,7 +76,7 @@ ipcMain.handle("add-log", (event, entry) => {
   });
 });
 
-ipcMain.handle("get-logs", () => {
+ipcMain.handle("get-logs", (event, limit = 10) => {
   return new Promise((resolve) => {
     db.all(
       "SELECT * FROM logs ORDER BY id DESC",

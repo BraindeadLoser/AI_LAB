@@ -16,14 +16,17 @@
 │   └── python/
 ├── Database/
 │   ├── db.js
-│   └── log_events.db
+│   ├── log_events.db
+│   ├── retrieve.go
+│   └── retrieve.py
 ├── Dockerfile
 ├── Progress Report.docx
 ├── README.md
 ├── Structure/
 │   └── file_tree.txt
 ├── Tools/
-│   └── inspector.py
+│   ├── inspector.py
+│   └── refresh_db.py
 ├── Utility/
 │   ├── structure.py
 │   └── update_git.py
@@ -31,5 +34,4 @@
 ├── main.js
 ├── package-lock.json
 ├── package.json
-├── preload.js
-└── ~$ogress Report.docx
+└── preload.js

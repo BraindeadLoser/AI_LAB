@@ -9,6 +9,7 @@ import {
   enableDevMode,
   disableDevMode
 } from "./logSystem.js";
+import { buildBridgeContext } from "./Bridge.js";
 // Log events to the bottom console
 function logEvent(entry) {
   customConsole.log(entry.type || 'info', 'app', entry.data || {});
