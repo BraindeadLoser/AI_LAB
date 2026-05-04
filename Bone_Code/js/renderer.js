@@ -2,28 +2,17 @@ import { savePreferences, loadPreferences } from "./storage.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
-
-// IPC logging functions (communicates with main process)
-const logSystem = {
-  enableDevelopMode: () => window.ipc?.enableDevelopMode(),
-  disableDevelopMode: () => window.ipc?.disableDevelopMode(),
-  addLog: (entry) => window.ipc?.addLog(entry),
-  getLogs: () => window.ipc?.getLogs(),
-  captureUserMessage: (content, index) => {
-    logSystem.addLog({
-      type: 'USER_MESSAGE',
-      event: `message_${index}`,
-      details: { content, number: index }
-    });
-  },
-  captureAIMessage: (content, index) => {
-    logSystem.addLog({
-      type: 'AI_MESSAGE',
-      event: `message_${index}`,
-      details: { content, number: index }
-    });
-  }
-};
+import customConsole from "./console.js";
+import {
+  captureUserMessage,
+  captureAIMessage,
+  enableDevMode,
+  disableDevMode
+} from "./logSystem.js";
+// Log events to the bottom console
+function logEvent(entry) {
+  customConsole.log(entry.type || 'info', 'app', entry.data || {});
+}
 
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
@@ -73,13 +62,12 @@ div.innerHTML = marked.parse(text);
   chat.scrollTop = chat.scrollHeight;
   
   // Log message in JSON format
-  if (type === "user") {
-    logEvent({ type: 'user_message', seq: messageSeq++, data: { content: text } });
-  } else if (type === "ai") {
-    logEvent({ type: 'ai_response', seq: messageSeq++, data: { content: text } });
-  }
+if (type === "user") {
+  captureUserMessage(text, messageSeq++);
+} else if (type === "ai") {
+  captureAIMessage(text, messageSeq++);
 }
-
+}
 async function send() {
   const msg = input.value;
   if (!msg) return;
@@ -337,24 +325,76 @@ document.getElementById("newChatBtn").addEventListener("click", () => {
 const devBtn = document.getElementById("devToggle");
 let devState = false;
 
-devBtn.addEventListener("click", () => {
-    devState = !devState;
+/**
+ * Update develop mode state across all systems
+ * Synchronizes: Main Process + Renderer Process + Console Singleton
+ */
+async function updateDevelopMode(enabled) {
+    const consoleDiv = document.getElementById("bottom-console");
     
-    if (devState) {
-        logSystem.enableDevelopMode();
-        devBtn.classList.remove("dev-off");
-        devBtn.classList.add("dev-on");
-        logSystem.addLog({ type: 'DEV_MODE', event: 'enabled', details: { status: 'on' } });
-    } else {
-        logSystem.disableDevelopMode();
-        devBtn.classList.remove("dev-on");
-        devBtn.classList.add("dev-off");
-        const consoleDiv = document.getElementById("bottom-console");
-        if (consoleDiv) {
-            consoleDiv.innerHTML = "";
+    try {
+        if (enabled) {
+            // Enable develop mode in main process
+          await enableDevMode();
+const result = { success: true };
+            if (result?.success) {
+                // Sync console singleton
+                customConsole.setDevelopMode(true);
+                // Update UI
+                devBtn.classList.remove("dev-off");
+                devBtn.classList.add("dev-on");
+                if (consoleDiv) {
+                    consoleDiv.classList.remove("hidden");
+                }
+                devState = true;
+                // Log the mode change (will be captured now)
+                logEvent({ type: 'DEV_MODE', data: { status: 'enabled', timestamp: new Date().toISOString() } });
+                console.log("[DevMode] ✓ Develop mode ENABLED - All logging active");
+            }
+        } else {
+            // Disable develop mode in main process
+await disableDevMode();
+const result = { success: true };
+            if (result?.success) {
+                // Sync console singleton
+                customConsole.setDevelopMode(false);
+                // Update UI
+                devBtn.classList.remove("dev-on");
+                devBtn.classList.add("dev-off");
+                if (consoleDiv) {
+                    consoleDiv.classList.add("hidden");
+                    consoleDiv.innerHTML = ""; // Clear logs
+                }
+                devState = false;
+                console.log("[DevMode] ✓ Develop mode DISABLED - Logging paused");
+            }
         }
+    } catch (err) {
+        console.error("[DevMode] Error updating develop mode:", err);
     }
+}
+
+devBtn.addEventListener("click", () => {
+    updateDevelopMode(!devState);
 });
+
+/**
+ * Initialize develop mode state on app load
+ * Syncs renderer with main process state
+ */
+async function initializeDevelopMode() {
+    try {
+        const mainProcessState = await window.ipc?.getDevelopMode?.();
+        customConsole.setDevelopMode(mainProcessState || false);
+        console.log(`[Init] Develop mode initialized from main process: ${mainProcessState}`);
+    } catch (err) {
+        console.error("[Init] Failed to initialize develop mode:", err);
+        customConsole.setDevelopMode(false);
+    }
+}
+
+// Initialize on load
+initializeDevelopMode();
 
 window.newChat = newChat;
 window.getAllConversations = getAllConversations;

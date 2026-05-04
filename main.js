@@ -38,10 +38,16 @@ function createWindow() {
 // IPC Handlers for logging
 ipcMain.handle("enable-develop-mode", () => {
   developMode = true;
+  return { success: true, mode: developMode };
 });
 
 ipcMain.handle("disable-develop-mode", () => {
   developMode = false;
+  return { success: true, mode: developMode };
+});
+
+ipcMain.handle("get-develop-mode", () => {
+  return developMode;
 });
 
 ipcMain.handle("add-log", (event, entry) => {

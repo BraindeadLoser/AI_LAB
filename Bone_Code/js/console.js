@@ -1,7 +1,25 @@
 // console.js
 class Console extends EventTarget {
+  constructor() {
+    super();
+    this.isDevelopMode = false;
+  }
+
+  // Set develop mode state
+  setDevelopMode(state) {
+    this.isDevelopMode = state;
+  }
+
+  // Get develop mode state
+  getDevelopMode() {
+    return this.isDevelopMode;
+  }
+
   // Log a new entry
   log(level, source, payload) {
+    // Only log if in develop mode
+    if (!this.isDevelopMode) return;
+
     const entry = {
       level,
       source,

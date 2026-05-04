@@ -1,105 +1,154 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// logSystem.js (Renderer-safe, DevMode-synchronized via IPC)
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let isDevMode = false;
 
-// Path to log_events.db
-const dbPath = path.join(__dirname, '../../Database/log_events.db');
-const db = new Database(dbPath);
+// --------------------------------------------------
+// Sync Dev Mode from Main Process
+// --------------------------------------------------
 
-// Initialize schema once
-db.exec(`
-  CREATE TABLE IF NOT EXISTS logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp TEXT,
-    type TEXT,
-    event TEXT,
-    details TEXT
-  )
-`);
-
-let developMode = false;
-
-// Toggle develop mode
-function enableDevelopMode() { developMode = true; }
-function disableDevelopMode() { developMode = false; }
-
-// Core log function
-function addLog(entry) {
-  if (!developMode) return; // Only log in develop mode
-
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    type: entry.type,
-    event: entry.event,
-    details: JSON.stringify(entry.details)
-  };
-
+async function syncDevMode() {
   try {
-    const stmt = db.prepare(`
-      INSERT INTO logs (timestamp, type, event, details)
-      VALUES (@timestamp, @type, @event, @details)
-    `);
-    stmt.run(logEntry);
-
-    // Dispatch to bottom console (custom console panel)
-    const consolePanel = document.getElementById('bottom-console');
-    if (consolePanel) {
-      const line = document.createElement('div');
-      line.textContent = `[${logEntry.timestamp}] ${logEntry.type} - ${logEntry.event}: ${logEntry.details}`;
-      consolePanel.appendChild(line);
-    }
+    isDevMode = await window.ipc.getDevelopMode();
   } catch (err) {
-    console.error('Log insert failed:', err);
+    console.error("Failed to sync dev mode:", err);
   }
 }
 
-// Capture click events
-document.addEventListener('click', (e) => {
-  addLog({
-    type: 'CLICK',
-    event: 'ui',
-    details: { target: e.target.id || e.target.tagName }
-  });
-});
+// Initial sync on load
+syncDevMode();
 
-// Capture user messages
-function captureUserMessage(content, index) {
-  addLog({
-    type: 'USER_MESSAGE',
-    event: `message_${index}`,
-    details: { content, number: index }
-  });
+// --------------------------------------------------
+// Public hooks to update state when button is used
+// (IMPORTANT: call these from renderer.js after toggle)
+// --------------------------------------------------
+
+async function enableDevMode() {
+  await window.ipc.enableDevelopMode();
+  isDevMode = true;
 }
 
-// Capture AI messages
-function captureAIMessage(content, index) {
-  addLog({
-    type: 'AI_MESSAGE',
-    event: `message_${index}`,
-    details: { content, number: index }
-  });
+async function disableDevMode() {
+  await window.ipc.disableDevelopMode();
+  isDevMode = false;
 }
 
-// Capture errors with file + line
-window.addEventListener('error', (err) => {
+// --------------------------------------------------
+// Core Log Dispatcher (gated)
+// --------------------------------------------------
+
+async function addLog(entry) {
+  if (!isDevMode) return;
+
+  try {
+    await window.ipc.addLog({
+      type: entry.type || "UNKNOWN",
+      event: entry.event || "",
+      details: entry.details || {}
+    });
+  } catch (err) {
+    console.error("IPC log failed:", err);
+  }
+}
+
+// --------------------------------------------------
+// Event Capture: UI Clicks
+// --------------------------------------------------
+
+document.addEventListener("click", (e) => {
   addLog({
-    type: 'ERROR',
-    event: 'runtime',
+    type: "CLICK",
+    event: "ui_interaction",
     details: {
-      message: err.message,
-      file: err.filename || 'unknown',
-      line: err.lineno || 'unknown'
+      target: e.target.id || e.target.tagName,
+      class: e.target.className || null
     }
   });
 });
 
+// --------------------------------------------------
+// Event Capture: User Messages
+// --------------------------------------------------
+
+function captureUserMessage(content, index) {
+  addLog({
+    type: "USER_MESSAGE",
+    event: `message_${index}`,
+    details: {
+      content,
+      index
+    }
+  });
+}
+
+// --------------------------------------------------
+// Event Capture: AI Messages
+// --------------------------------------------------
+
+function captureAIMessage(content, index) {
+  addLog({
+    type: "AI_MESSAGE",
+    event: `message_${index}`,
+    details: {
+      content,
+      index
+    }
+  });
+}
+
+// --------------------------------------------------
+// Event Capture: Runtime Errors
+// --------------------------------------------------
+
+window.addEventListener("error", (err) => {
+  addLog({
+    type: "ERROR",
+    event: "runtime",
+    details: {
+      message: err.message,
+      file: err.filename || "unknown",
+      line: err.lineno || "unknown",
+      col: err.colno || "unknown"
+    }
+  });
+});
+
+// --------------------------------------------------
+// Event Capture: Unhandled Promises
+// --------------------------------------------------
+
+window.addEventListener("unhandledrejection", (event) => {
+  addLog({
+    type: "ERROR",
+    event: "unhandled_promise",
+    details: {
+      reason: event.reason?.message || String(event.reason)
+    }
+  });
+});
+
+// --------------------------------------------------
+// Lifecycle Log
+// --------------------------------------------------
+
+window.addEventListener("DOMContentLoaded", () => {
+  addLog({
+    type: "SYSTEM",
+    event: "renderer_loaded",
+    details: {
+      url: window.location.href
+    }
+  });
+});
+
+// --------------------------------------------------
+// Exports
+// --------------------------------------------------
+
 export {
-  enableDevelopMode,
-  disableDevelopMode,
+  addLog,
   captureUserMessage,
   captureAIMessage,
-  addLog
+  enableDevMode,
+  disableDevMode,
+  syncDevMode
 };
