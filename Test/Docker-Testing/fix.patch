@@ -1,5 +1,0 @@
---- sample.py
-+++ sample.py
-@@
--print("Hello World")
-+print("Hello AI Lab")

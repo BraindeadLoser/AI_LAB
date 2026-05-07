@@ -2,6 +2,7 @@ import { savePreferences, loadPreferences } from "./storage.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
+import { executeFileAccessAgent } from "./file_access.js";
 import customConsole from "./console.js";
 import {
   captureUserMessage,
@@ -487,3 +488,11 @@ initializeDevelopMode();
 window.newChat = newChat;
 window.getAllConversations = getAllConversations;
 renderConversations();
+
+executeFileAccessAgent("Read sample.py and explain what the code does.")
+    .then(response => {
+        console.log(response);
+    })
+    .catch(error => {
+        console.error(error);
+    });

@@ -7,5 +7,8 @@ contextBridge.exposeInMainWorld("ipc", {
   getDevelopMode: () => ipcRenderer.invoke("get-develop-mode"),
   addLog: (entry) => ipcRenderer.invoke("add-log", entry),
   getLogs: (limit) => ipcRenderer.invoke("get-logs", limit),
-  getRecentLogs: (limit) => ipcRenderer.invoke("get-logs", limit)
+  getRecentLogs: (limit) => ipcRenderer.invoke("get-logs", limit),
+  listSandboxFiles: () => ipcRenderer.invoke("list-sandbox-files"),
+  readSandboxFile: (filename) =>
+    ipcRenderer.invoke("read-sandbox-file", filename),
 });

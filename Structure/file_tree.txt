@@ -10,8 +10,10 @@
 │   │   ├── Bridge.js
 │   │   ├── console.js
 │   │   ├── conversations.js
+│   │   ├── file_access.js
 │   │   ├── logSystem.js
 │   │   ├── renderer.js
+│   │   ├── save_changes.js
 │   │   └── storage.js
 │   └── python/
 ├── Database/
@@ -27,7 +29,6 @@
 ├── Test/
 │   ├── Docker-Testing/
 │   │   ├── Dockerfile
-│   │   ├── fix.patch
 │   │   ├── sample.go
 │   │   ├── sample.java
 │   │   ├── sample.py

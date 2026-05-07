@@ -91,6 +91,47 @@ ipcMain.handle("get-logs", (event, limit = 10) => {
     );
   });
 });
+ipcMain.handle("list-sandbox-files", async () => {
+    return [
+        "sample.py",
+        "sample.java",
+        "sample.go",
+        "sample.rb"
+    ];
+});
+ipcMain.handle("read-sandbox-file", async (event, filename) => {
+
+    const allowedFiles = [
+        "sample.py",
+        "sample.java",
+        "sample.go",
+        "sample.rb"
+    ];
+
+    if (!allowedFiles.includes(filename)) {
+        throw new Error("Access denied");
+    }
+
+const { execFile } = require("child_process");
+
+return new Promise((resolve, reject) => {
+
+    execFile(
+        "python",
+        ["Tools/docker_testing.py", "read", filename],
+        (error, stdout, stderr) => {
+
+            if (error) {
+                reject(stderr || error.message);
+                return;
+            }
+
+            resolve(stdout);
+        }
+    );
+
+});
+});
 
 app.whenReady().then(createWindow);
 
