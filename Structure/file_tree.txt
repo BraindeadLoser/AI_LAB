@@ -8,12 +8,14 @@
 │   │   └── index.html
 │   ├── js/
 │   │   ├── Bridge.js
+│   │   ├── Edit_Files/
+│   │   │   └── save_changes.js
+│   │   ├── Fetch_Files/
+│   │   │   └── file_access.js
 │   │   ├── console.js
 │   │   ├── conversations.js
-│   │   ├── file_access.js
 │   │   ├── logSystem.js
 │   │   ├── renderer.js
-│   │   ├── save_changes.js
 │   │   └── storage.js
 │   └── python/
 ├── Database/
