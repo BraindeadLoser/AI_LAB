@@ -1,177 +1,86 @@
-import sqlite3
-from pathlib import Path
-from datetime import datetime
-
-DB_PATH = Path(r"D:\AI_LAB\Database\log_events.db")
-TABLE_NAME = "logs"   # change if needed
-
-EXPECTED_COLUMNS = ["timestamp", "type", "event", "details"]
-
-def connect():
-    if not DB_PATH.exists():
-        print("❌ DB not found:", DB_PATH)
-        return None
-    return sqlite3.connect(DB_PATH)
-
-# --------------------------------------------------
-
-def check_integrity(conn):
-    print("\n🔍 DB INTEGRITY CHECK")
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA integrity_check;")
-    result = cursor.fetchone()[0]
-    print("Result:", result)
-
-# --------------------------------------------------
-
-def inspect_schema(conn):
-    print("\n📐 SCHEMA ANALYSIS")
-    cursor = conn.cursor()
-    cursor.execute(f"PRAGMA table_info({TABLE_NAME});")
-    cols = cursor.fetchall()
-
-    actual_columns = [c[1] for c in cols]
-    print("Columns:", actual_columns)
-
-    missing = set(EXPECTED_COLUMNS) - set(actual_columns)
-    extra = set(actual_columns) - set(EXPECTED_COLUMNS)
-
-    if not missing and not extra:
-        print("✅ Schema matches expected")
-    else:
-        if missing:
-            print("❌ Missing columns:", missing)
-        if extra:
-            print("⚠️ Extra columns:", extra)
-
-# --------------------------------------------------
-
-def sample_logs(conn, limit=10):
-    print(f"\n📊 SAMPLE ({limit} rows)")
-    cursor = conn.cursor()
-    cursor.execute(f"""
-        SELECT * FROM {TABLE_NAME}
-        ORDER BY rowid DESC
-        LIMIT {limit}
-    """)
-    rows = cursor.fetchall()
-    for r in rows:
-        print(r)
-    return rows
-
-# --------------------------------------------------
-
-def analyze_nulls(conn):
-    print("\n🧨 NULL / EMPTY FIELD ANALYSIS")
-    cursor = conn.cursor()
-
-    for col in EXPECTED_COLUMNS:
-        cursor.execute(f"""
-            SELECT COUNT(*) FROM {TABLE_NAME}
-            WHERE {col} IS NULL OR {col} = ''
-        """)
-        count = cursor.fetchone()[0]
-        print(f"{col}: {count} problematic rows")
-
-# --------------------------------------------------
-
-def analyze_types(rows):
-    print("\n🧪 DATA SHAPE ANALYSIS (sample-based)")
-
-    for r in rows:
-        timestamp, type_, event, details = r
-
-        # timestamp check
-        try:
-            datetime.fromisoformat(timestamp)
-        except Exception:
-            print("❌ Bad timestamp:", timestamp)
-
-        # suspicious details
-        if isinstance(details, str):
-            if details.strip() == "[object Object]":
-                print("❌ Serialization issue in details:", details)
-
-        if not type_:
-            print("❌ Missing type:", r)
-
-        if not event:
-            print("❌ Missing event:", r)
-
-# --------------------------------------------------
-
-def analyze_patterns(conn):
-    print("\n📈 PATTERN ANALYSIS")
-
-    cursor = conn.cursor()
-
-    # frequency of event types
-    cursor.execute(f"""
-        SELECT type, COUNT(*) 
-        FROM {TABLE_NAME}
-        GROUP BY type
-    """)
-    print("\nEvent type distribution:")
-    for row in cursor.fetchall():
-        print(row)
-
-    # duplicate detection
-    cursor.execute(f"""
-        SELECT event, COUNT(*)
-        FROM {TABLE_NAME}
-        GROUP BY event
-        HAVING COUNT(*) > 5
-    """)
-    duplicates = cursor.fetchall()
-    if duplicates:
-        print("\n⚠️ High-frequency duplicate events:")
-        for d in duplicates:
-            print(d)
-
-# --------------------------------------------------
-
-def timeline_check(conn):
-    print("\n⏱️ TIMELINE CONSISTENCY")
-
-    cursor = conn.cursor()
-    cursor.execute(f"""
-        SELECT timestamp FROM {TABLE_NAME}
-        ORDER BY rowid ASC
-        LIMIT 20
-    """)
-    timestamps = [r[0] for r in cursor.fetchall()]
-
-    previous = None
-    for ts in timestamps:
-        try:
-            current = datetime.fromisoformat(ts)
-            if previous and current < previous:
-                print("❌ Time regression detected:", ts)
-            previous = current
-        except:
-            print("❌ Invalid timestamp format:", ts)
-
-# --------------------------------------------------
-
-def main():
-    conn = connect()
-    if not conn:
-        return
-
-    check_integrity(conn)
-    inspect_schema(conn)
-
-    rows = sample_logs(conn)
-
-    analyze_nulls(conn)
-    analyze_types(rows)
-    analyze_patterns(conn)
-    timeline_check(conn)
-
-    conn.close()
-    print("\n✅ Inspection complete")
-
-# --------------------------------------------------
-
-if __name__ == "__main__":
-    main()
+import os
+import subprocess
+print("=" * 60)
+print("ARCHITECTURE INSPECTOR")
+print("=" * 60)
+def run_command(command):
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True
+        )
+        return result.stdout.strip(), result.stderr.strip()
+    except Exception as e:
+        return "", str(e)
+# ---------------------------------------------------
+# STEP 1
+# DOCKER ENVIRONMENT INSPECTION
+# ---------------------------------------------------
+print("\n[1] CHECKING DOCKER DAEMON")
+stdout, stderr = run_command(["docker", "info"])
+if stderr:
+    print("\n[DOCKER ERROR]")
+    print(stderr)
+else:
+    print("\nDocker daemon is reachable.")
+print("\n" + "-" * 60)
+print("[2] RUNNING CONTAINERS")
+print("-" * 60)
+stdout, stderr = run_command([
+    "docker",
+    "ps",
+    "--format",
+    "table {{.ID}}\t{{.Names}}\t{{.Status}}"
+])
+if stdout:
+    print(stdout)
+else:
+    print("No running containers found.")
+if stderr:
+    print("\n[ERROR]")
+    print(stderr)
+print("\n" + "-" * 60)
+print("[3] ALL CONTAINERS (INCLUDING STOPPED)")
+print("-" * 60)
+stdout, stderr = run_command([
+    "docker",
+    "ps",
+    "-a",
+    "--format",
+    "table {{.ID}}\t{{.Names}}\t{{.Status}}"
+])
+if stdout:
+    print(stdout)
+else:
+    print("No containers found.")
+if stderr:
+    print("\n[ERROR]")
+    print(stderr)
+    print("\n" + "-" * 60)
+print("[4] HOST FILE ACCESS TEST")
+print("-" * 60)
+test_path = r"D:\AI_LAB\Sandbox\sample.py"
+try:
+    with open(test_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    print("Host filesystem READ SUCCESSFUL\n")
+    print("FIRST 300 CHARACTERS:\n")
+    print(content[:300])
+except Exception as e:
+    print("Host filesystem READ FAILED")
+    print(str(e))
+    print("\n" + "-" * 60)
+print("[5] SEARCHING FOR sample.py")
+print("-" * 60)
+search_root = r"D:\AI_LAB"
+matches = []
+for root, dirs, files in os.walk(search_root):
+    if "sample.py" in files:
+        matches.append(os.path.join(root, "sample.py"))
+if matches:
+    print("FOUND FILES:\n")
+    for m in matches:
+        print(m)
+else:
+    print("No sample.py found.")

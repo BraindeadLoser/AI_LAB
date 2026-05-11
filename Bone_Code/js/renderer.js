@@ -2,7 +2,10 @@ import { savePreferences, loadPreferences } from "./storage.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
-import { executeFileAccessAgent } from "./file_access.js";
+import {
+    listAllowedFiles,
+    readSandboxFile
+} from "./file_access.js";
 import customConsole from "./console.js";
 import {
   captureUserMessage,
@@ -105,15 +108,43 @@ Use them only if relevant.
 You MAY analyze logs if useful.
 `;
   }
-
   // Step 4: Construct messages
   const finalMessages = [
     {
       role: "system",
       content: systemRules
-    }
-  ];
+    },
+    {
+    role: "system",
+    content:
+`You operate with TWO response modes.
 
+1. USER RESPONSE MODE
+- Used for normal conversation with the user.
+- Respond naturally.
+
+2. TOOL REQUEST MODE
+- Used ONLY when you need file contents.
+- In this mode, respond ONLY with raw JSON.
+- No markdown.
+- No explanations.
+- No extra text.
+
+Tool request format:
+
+{
+  "tool": "file_access",
+  "action": "read",
+  "file": "sample.py"
+}
+
+Available files:
+${listAllowedFiles().join("\n")}
+
+Never invent file contents.
+Only request files when necessary.`
+}
+  ];
   // Step 5: Inject logs ONLY if present
   if (bridge.logs.length > 0) {
     finalMessages.push({
@@ -488,11 +519,3 @@ initializeDevelopMode();
 window.newChat = newChat;
 window.getAllConversations = getAllConversations;
 renderConversations();
-
-executeFileAccessAgent("Read sample.py and explain what the code does.")
-    .then(response => {
-        console.log(response);
-    })
-    .catch(error => {
-        console.error(error);
-    });

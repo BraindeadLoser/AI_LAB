@@ -100,37 +100,42 @@ ipcMain.handle("list-sandbox-files", async () => {
     ];
 });
 ipcMain.handle("read-sandbox-file", async (event, filename) => {
+  const allowedFiles = [
+    "sample.py",
+    "sample.java",
+    "sample.go",
+    "sample.rb"
+  ];
 
-    const allowedFiles = [
-        "sample.py",
-        "sample.java",
-        "sample.go",
-        "sample.rb"
-    ];
+  if (!allowedFiles.includes(filename)) {
+    throw new Error("Access denied");
+  }
 
-    if (!allowedFiles.includes(filename)) {
-        throw new Error("Access denied");
-    }
+  const { execFile } = require("child_process");
 
-const { execFile } = require("child_process");
-
-return new Promise((resolve, reject) => {
-
+  return new Promise((resolve) => {
     execFile(
-        "python",
-        ["Tools/docker_testing.py", "read", filename],
-        (error, stdout, stderr) => {
-
-            if (error) {
-                reject(stderr || error.message);
-                return;
-            }
-
-            resolve(stdout);
+      "python",
+      ["Tools/docker_testing.py", "read", filename],
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error("Docker retrieval error:", stderr || error.message);
+          resolve("ERROR: Sandbox not available");
+          return;
         }
-    );
 
-});
+        if (!stdout || stdout.trim().length === 0) {
+          console.warn("Docker returned empty output for", filename);
+          resolve("ERROR: Sandbox not available");
+          return;
+        }
+        console.log("RAW STDOUT LENGTH:", stdout.length);
+        console.log("RAW STDOUT BYTES:", Buffer.from(stdout));
+
+        resolve(stdout);
+      }
+    );
+  });
 });
 
 app.whenReady().then(createWindow);
