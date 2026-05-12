@@ -129,8 +129,6 @@ ipcMain.handle("read-sandbox-file", async (event, filename) => {
           resolve("ERROR: Sandbox not available");
           return;
         }
-        console.log("RAW STDOUT LENGTH:", stdout.length);
-        console.log("RAW STDOUT BYTES:", Buffer.from(stdout));
 
         resolve(stdout);
       }

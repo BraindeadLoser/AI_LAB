@@ -5,7 +5,7 @@ import { deleteConversation } from "./conversations.js";
 import {
     listAllowedFiles,
     readSandboxFile
-} from "./file_access.js";
+} from "./Fetch_Files/file_access.js";
 import customConsole from "./console.js";
 import {
   captureUserMessage,
@@ -18,7 +18,8 @@ import { buildBridgeContext } from "./Bridge.js";
 function logEvent(entry) {
   customConsole.log(entry.type || 'info', 'app', entry.data || {});
 }
-
+//Test starts here
+//Test ends here
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 

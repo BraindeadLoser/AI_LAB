@@ -11,7 +11,8 @@
 │   │   ├── Edit_Files/
 │   │   │   └── save_changes.js
 │   │   ├── Fetch_Files/
-│   │   │   └── file_access.js
+│   │   │   ├── file_access.js
+│   │   │   └── retrieval_index.js
 │   │   ├── console.js
 │   │   ├── conversations.js
 │   │   ├── logSystem.js
@@ -24,7 +25,6 @@
 │   ├── retrieve.go
 │   └── retrieve.py
 ├── Dockerfile
-├── Progress Report 2.pdf
 ├── Progress Report.docx
 ├── README.md
 ├── Structure/
