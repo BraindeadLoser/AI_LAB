@@ -29,8 +29,6 @@
 │   ├── retrieve.go
 │   └── retrieve.py
 ├── Dockerfile
-├── Progress Report 2.pdf
-├── Progress Report 3.pdf
 ├── Progress Report.docx
 ├── README.md
 ├── Structure/
