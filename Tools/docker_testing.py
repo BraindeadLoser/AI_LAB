@@ -59,43 +59,49 @@ def git_status():
     ], capture_output=True, text=True, check=True)
     print(result.stdout)
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: docker_testing.py <command> [filename/patch]")
+        sys.exit(1)
+
     cmd = sys.argv[1]
+
     if cmd == "build":
         remove_container()
         remove_image()
         build_container()
+
     elif cmd == "run":
         run_container()
+
     elif cmd == "list":
         list_files()
+
     elif cmd == "patch":
+        if len(sys.argv) < 3:
+            print("Usage: docker_testing.py patch <patch_file>")
+            sys.exit(1)
         apply_patch(sys.argv[2])
+
     elif cmd == "read":
+        if len(sys.argv) < 3:
+            print("Usage: docker_testing.py read <filename>")
+            sys.exit(1)
         filename = sys.argv[2]
-        allowed_files = [
-            "sample.py",
-            "sample.java",
-            "sample.go",
-            "sample.rb"
-        ]
+        allowed_files = ["sample.py", "sample.java", "sample.go", "sample.rb"]
         if filename not in allowed_files:
             print("ACCESS_DENIED")
             sys.exit(1)
         container_path = f"/app/{filename}"
         result = subprocess.run(
-            [
-                "docker",
-                "exec",
-                "ai_sandbox_container",
-                "cat",
-                container_path
-            ],
-            capture_output=True,
-            text=True
+            ["docker", "exec", CONTAINER_NAME, "cat", container_path],
+            capture_output=True, text=True
         )
         print(result.stdout)
+
     elif cmd == "status":
         git_status()
+
     else:
         print("Unknown command")
+
         

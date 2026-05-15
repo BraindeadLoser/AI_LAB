@@ -2,29 +2,39 @@ import {
     listAllowedFiles,
     readSandboxFile
 } from "./file_access.js";
-//This establishes the future index structure for file retrieval and symbol lookup. It is designed to be flexible and extensible, allowing us to easily add new features like chunking or metadata as needed.
-export function createRetrievalIndex() {
 
-    return {
-        files: {},
-        symbols: {},
-        chunks: {}
-    };
+export async function registerFile(index, filename, metadata = {}) {
+  if (!index.files) index.files = {};
+  index.files[filename] = { filename, ...metadata };
+
+  // Always read file content
+  const result = await readSandboxFile(filename);
+  const content = typeof result === "string" ? result : result.content;
+
+  // Parse symbols deterministically
+  const symbols = parseSymbols(filename, content);
+  symbols.forEach(sym => {
+    sym.file = filename;
+    registerSymbol(index, sym);
+  });
+
+  index.files[filename].symbolsIndexed = true;
+
+  return index.files[filename];
 }
-// Purpose- establish deterministic file registration, prepare future chunk/symbol association, keep indexing centralized instead of scattered across modules.
-export function registerFile(index, filename, metadata = {}) {
 
-    index.files[filename] = {
-        filename,
-        ...metadata
-    };
-
-    return index.files[filename];
-}
 //Purpose: create deterministic retrieval visibility, avoid direct internal structure access later, prepare future planner-facing capability exposure.
 export function getRegisteredFiles(index) {
 
     return Object.keys(index.files);
+}
+// define createRetrievalIndex first
+export function createRetrievalIndex() {
+  return {
+    files: {},
+    symbols: {},
+    chunks: {}
+  };
 }
 //synchronize retrieval metadata with sandbox capability, create deterministic initialization, prepare future indexing passes without hardcoding files repeatedly.
 export function initializeRetrievalIndex() {
@@ -33,16 +43,14 @@ export function initializeRetrievalIndex() {
 
     const allowedFiles = listAllowedFiles();
 
-    for (const filename of allowedFiles) {
-
-        registerFile(index, filename, {
-            indexed: false,
-            symbolsIndexed: false,
-            chunksIndexed: false
-        });
-
-    }
-
+for (const filename of allowedFiles) {
+  index.files[filename] = {
+    filename,
+    indexed: false,
+    symbolsIndexed: false,
+    chunksIndexed: false
+  };
+}
     return index;
 }
 //Purpose: prepare deterministic chunk tracking, support future selective retrieval, avoid raw file dumping into AI context.
@@ -72,15 +80,18 @@ export function getChunksForFile(index, filename) {
 export async function buildFileChunks(
     index,
     filename,
-    chunkSize = 20
+    chunkSize = 20,
+    reader=null
 ) {
+    // get file content safely
+    const result = reader
+        ? await reader(filename)          // rawReadSandboxFile returns a string
+        : await readSandboxFile(filename); // returns { filename, content }
 
-    const result = await readSandboxFile(filename);
-
-const content = result.content;
-
+    // normalize both cases
+    const content = typeof result === "string" ? result : result.content;
     const lines = content.split("\n");
-
+    
     let chunkCounter = 0;
 
     for (let i = 0; i < lines.length; i += chunkSize) {

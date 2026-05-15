@@ -9,15 +9,19 @@
 │   ├── js/
 │   │   ├── Bridge.js
 │   │   ├── Edit_Files/
-│   │   │   └── save_changes.js
+│   │   │   ├── apply_patch.js
+│   │   │   ├── save_changes.js
+│   │   │   └── validation_runner.js
 │   │   ├── Fetch_Files/
 │   │   │   ├── file_access.js
-│   │   │   └── retrieval_index.js
+│   │   │   ├── retrieval_index.js
+│   │   │   └── symbol_parser.js
 │   │   ├── console.js
 │   │   ├── conversations.js
 │   │   ├── logSystem.js
 │   │   ├── renderer.js
-│   │   └── storage.js
+│   │   ├── storage.js
+│   │   └── test_pipelines.mjs
 │   └── python/
 ├── Database/
 │   ├── db.js
@@ -25,6 +29,8 @@
 │   ├── retrieve.go
 │   └── retrieve.py
 ├── Dockerfile
+├── Progress Report 2.pdf
+├── Progress Report 3.pdf
 ├── Progress Report.docx
 ├── README.md
 ├── Structure/
@@ -47,7 +53,7 @@
 │   └── update_git.py
 ├── docker-compose.yml
 ├── main.js
-├── package-lock.json
 ├── package.json
 ├── preload.js
+├── runtime_inspector.py
 └── test_exec.js
