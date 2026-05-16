@@ -3,18 +3,8 @@ import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
 import {
-    listAllowedFiles,
-    readSandboxFile,
-    readSandboxFileLines
+    readSandboxSymbol
 } from "./Fetch_Files/file_access.js";
-import {
-  initializeRetrievalIndex,
-  registerFile,
-  getRegisteredFiles,
-  buildFileChunks,
-  getChunksForFile,
-  registerChunk
-} from "./Fetch_Files/retrieval_index.js";
 import customConsole from "./console.js";
 import {
   captureUserMessage,
@@ -28,45 +18,31 @@ function logEvent(entry) {
   customConsole.log(entry.type || 'info', 'app', entry.data || {});
 }
 //Test starts here
-async function runFullRetrievalIndexTests() {
-  console.log("=== FULL RETRIEVAL_INDEX TEST START ===");
+async function testSemanticRetrieval() {
 
-  // 1. Initialize index
-  const index = initializeRetrievalIndex();
-  console.log("Initial index structure:", index);
+    try {
 
-  // 2. Register one file explicitly
-  const fileMeta = await registerFile(index, "sample.py", { customMeta: "test" });
-  console.log("Registered file metadata:", fileMeta);
+        const result =
+            await readSandboxSymbol(
+                "sample.py",
+                "greet"
+            );
 
-  // 3. Verify registered files list
-  const registered = getRegisteredFiles(index);
-  console.log("Registered files:", registered);
+        console.log(
+            "SEMANTIC RETRIEVAL RESULT:",
+            result
+        );
 
-  // 4. Build chunks for sample.py
-  const chunks = await buildFileChunks(index, "sample.py", 5);
-  console.log("Chunks built for sample.py:", chunks);
+    } catch (err) {
 
-  // 5. Retrieve chunks for sample.py
-  const retrievedChunks = getChunksForFile(index, "sample.py");
-  console.log("Retrieved chunks:", retrievedChunks);
-
-  // 6. Manual chunk registration (simulate custom chunk)
-  const customChunk = registerChunk(index, "sample.py", "sample.py::chunk_custom", {
-    startLine: 1,
-    endLine: 2,
-    lineCount: 2
-  });
-  console.log("Custom chunk registered:", customChunk);
-
-  // 7. Confirm index integrity after all operations
-  console.log("Final index state:", index);
-
-  console.log("=== FULL RETRIEVAL_INDEX TEST END ===");
+        console.log(
+            "SEMANTIC RETRIEVAL FAILED:",
+            err
+        );
+    }
 }
 
-// Run automatically when renderer loads
-runFullRetrievalIndexTests();
+testSemanticRetrieval();
 //Test ends here
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");

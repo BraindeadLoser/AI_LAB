@@ -1,31 +1,34 @@
-import {
-    listAllowedFiles,
-    readSandboxFile
-} from "./file_access.js";
+import { parseSymbols } from "./symbol_parser.js";
+export async function registerFile(
+    index,
+    filename,
+    content,
+    metadata = {}
+) {
+    if (!index.files) {
+        index.files = {};
+    }
 
-export async function registerFile(index, filename, metadata = {}) {
-  if (!index.files) index.files = {};
-  index.files[filename] = { filename, ...metadata };
+    index.files[filename] = {
+        filename,
+        ...metadata
+    };
 
-  // Always read file content
-  const result = await readSandboxFile(filename);
-  const content = typeof result === "string" ? result : result.content;
+    // Parse symbols deterministically
+    const symbols = parseSymbols(filename, content);
+    index.files[filename].symbolCount = symbols.length;
 
-  // Parse symbols deterministically
-  const symbols = parseSymbols(filename, content);
-  symbols.forEach(sym => {
-    sym.file = filename;
-    registerSymbol(index, sym);
-  });
+    symbols.forEach(sym => {
+        sym.file = filename;
+        registerSymbol(index, sym);
+    });
 
-  index.files[filename].symbolsIndexed = true;
+    index.files[filename].symbolsIndexed = true;
 
-  return index.files[filename];
+    return index.files[filename];
 }
-
 //Purpose: create deterministic retrieval visibility, avoid direct internal structure access later, prepare future planner-facing capability exposure.
 export function getRegisteredFiles(index) {
-
     return Object.keys(index.files);
 }
 // define createRetrievalIndex first
@@ -39,19 +42,7 @@ export function createRetrievalIndex() {
 //synchronize retrieval metadata with sandbox capability, create deterministic initialization, prepare future indexing passes without hardcoding files repeatedly.
 export function initializeRetrievalIndex() {
 
-    const index = createRetrievalIndex();
-
-    const allowedFiles = listAllowedFiles();
-
-for (const filename of allowedFiles) {
-  index.files[filename] = {
-    filename,
-    indexed: false,
-    symbolsIndexed: false,
-    chunksIndexed: false
-  };
-}
-    return index;
+    return createRetrievalIndex();
 }
 //Purpose: prepare deterministic chunk tracking, support future selective retrieval, avoid raw file dumping into AI context.
 export function registerChunk(
@@ -60,38 +51,37 @@ export function registerChunk(
     chunkId,
     metadata = {}
 ) {
-
     index.chunks[chunkId] = {
         filename,
         chunkId,
         ...metadata
     };
-
     return index.chunks[chunkId];
 }
 //Purpose: deterministic chunk lookup, file-to-chunk mapping, future selective retrieval orchestration.
 export function getChunksForFile(index, filename) {
-
     return Object.values(index.chunks)
         .filter(chunk => chunk.filename === filename);
-
 }
 //This is the first real chunk-indexing layer.
 export async function buildFileChunks(
     index,
     filename,
-    chunkSize = 20,
-    reader=null
+    content,
+    chunkSize = 20
 ) {
-    // get file content safely
-    const result = reader
-        ? await reader(filename)          // rawReadSandboxFile returns a string
-        : await readSandboxFile(filename); // returns { filename, content }
-
-    // normalize both cases
-    const content = typeof result === "string" ? result : result.content;
     const lines = content.split("\n");
     
+    if (!index.files[filename]) {
+
+    index.files[filename] = {
+        filename,
+        indexed: false,
+        symbolsIndexed: false,
+        chunksIndexed: false
+    };
+}
+
     let chunkCounter = 0;
 
     for (let i = 0; i < lines.length; i += chunkSize) {
@@ -107,11 +97,82 @@ export async function buildFileChunks(
         });
 
         chunkCounter++;
-
     }
 
     index.files[filename].chunksIndexed = true;
 
     return getChunksForFile(index, filename);
+}
 
+export function registerSymbol(index, symbol) {
+
+    if (!index.symbols) {
+        index.symbols = {};
+    }
+
+    const key = `${symbol.file}::${symbol.name}`;
+
+    index.symbols[key] = symbol;
+
+    return index.symbols[key];
+}
+
+export function getSymbol(index, filename, symbolName) {
+
+    const key = `${filename}::${symbolName}`;
+
+    return index.symbols[key] || null;
+}
+
+export function extractSymbolRegion(
+    content,
+    symbol
+) {
+
+    const lines = content.split(/\r?\n/);
+
+    const selected = lines.slice(
+        symbol.startLine - 1,
+        symbol.endLine
+    );
+
+    return {
+        startLine: symbol.startLine,
+        endLine: symbol.endLine,
+        content: selected.join("\n")
+    };
+}
+
+export function retrieveSymbolContext(
+    index,
+    filename,
+    content,
+    symbolName
+) {
+
+    const symbol = getSymbol(
+        index,
+        filename,
+        symbolName
+    );
+
+    if (!symbol) {
+        return null;
+    }
+
+    const region = extractSymbolRegion(
+        content,
+        symbol
+    );
+
+    return {
+        file: filename,
+
+        symbol: {
+            type: symbol.type,
+            name: symbol.name
+        },
+
+        region
+    };
 }

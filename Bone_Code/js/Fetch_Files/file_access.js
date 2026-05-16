@@ -1,4 +1,4 @@
-import { initializeRetrievalIndex, buildFileChunks } from "./retrieval_index.js";
+import {initializeRetrievalIndex, buildFileChunks, registerFile, retrieveSymbolContext} from "./retrieval_index.js";
 // Bone_Code/js/file_access.js
 const ALLOWED_FILES = [
   "sample.py",
@@ -27,10 +27,24 @@ export async function readSandboxFile(filename) {
   if (!isAllowedFile(filename)) {
     throw new Error("Access denied");
   }
-  const index = initializeRetrievalIndex();
-  await buildFileChunks(index, filename, 20, rawReadSandboxFile);
-  try {
+const index = initializeRetrievalIndex();
+
 const content = await rawReadSandboxFile(filename);
+
+await buildFileChunks(
+    index,
+    filename,
+    content,
+    20
+);
+
+await registerFile(
+    index,
+    filename,
+    content
+);
+
+  try {
     const lines = content.split(/\r?\n/);
     // Guard: if Docker is unreachable or returns empty
     if (!content || content.trim().length === 0) {
@@ -92,5 +106,52 @@ const selectedLines = lines
         startLine,
         endLine,
         content: selectedLines.join("\n")
+    };
+}
+
+export async function readSandboxSymbol(
+    filename,
+    symbolName
+) {
+
+    if (!isAllowedFile(filename)) {
+        throw new Error("Access denied");
+    }
+
+    const index = initializeRetrievalIndex();
+
+    const content =
+        await rawReadSandboxFile(filename);
+
+    await buildFileChunks(
+        index,
+        filename,
+        content,
+        20
+    );
+
+    await registerFile(
+        index,
+        filename,
+        content
+    );
+
+    const result = retrieveSymbolContext(
+        index,
+        filename,
+        content,
+        symbolName
+    );
+
+    if (!result) {
+        return {
+            success: false,
+            error: "Symbol not found"
+        };
+    }
+
+    return {
+        success: true,
+        ...result
     };
 }
