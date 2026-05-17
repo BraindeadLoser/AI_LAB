@@ -18,31 +18,6 @@ function logEvent(entry) {
   customConsole.log(entry.type || 'info', 'app', entry.data || {});
 }
 //Test starts here
-async function testSemanticRetrieval() {
-
-    try {
-
-        const result =
-            await readSandboxSymbol(
-                "sample.py",
-                "greet"
-            );
-
-        console.log(
-            "SEMANTIC RETRIEVAL RESULT:",
-            result
-        );
-
-    } catch (err) {
-
-        console.log(
-            "SEMANTIC RETRIEVAL FAILED:",
-            err
-        );
-    }
-}
-
-testSemanticRetrieval();
 //Test ends here
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
