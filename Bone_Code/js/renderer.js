@@ -1,12 +1,11 @@
+import { sendToAI } from "../AI/ai_client.js";
+import { buildPrompt } from "../AI/prompt_builder.js";
+import { executeToolPipeline } from "../AI/tool_executor.js";
+import { renderConversations } from "../UI/sidebar_ui.js";
 import { savePreferences, loadPreferences } from "./storage.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
-import {
-    readSandboxSymbol,
-    readSandboxFile,
-    listAllowedFiles
-} from "./Fetch_Files/file_access.js";
 import customConsole from "./console.js";
 import {
   captureUserMessage,
@@ -96,196 +95,24 @@ try {
   const bridge = await buildBridgeContext(msg);
 
   // Step 2: Base system rules
-  let systemRules = `
-You are an AI assistant.
-
-Logs are background context.
-Do NOT mention logs unless explicitly asked.
-Use them only if relevant.
-`;
-
-  // Step 3: Modify rules if active mode
-  if (bridge.mode === "active") {
-    systemRules += `
-You MAY analyze logs if useful.
-`;
-  }
-  // Step 4: Construct messages
-  const finalMessages = [
-    {
-      role: "system",
-      content: systemRules
-    },
-    {
-    role: "system",
-    content:
-`You operate with TWO response modes.
-
-1. USER RESPONSE MODE
-- Used for normal conversation with the user.
-- Respond naturally.
-
-2. TOOL REQUEST MODE
-- Used ONLY when you need file contents.
-- In this mode, respond ONLY with raw JSON.
-- No markdown.
-- No explanations.
-- No extra text.
-
-Tool request format:
-
-{
-  "tool": "file_access",
-  "action": "read",
-  "file": "sample.py"
-}
-
-Available files:
-${listAllowedFiles().join("\n")}
-
-Never invent file contents.
-Only request files when necessary.`
-}
-  ];
-  // Step 5: Inject logs ONLY if present
-  if (bridge.logs.length > 0) {
-    finalMessages.push({
-      role: "system",
-      content: `BACKGROUND_LOGS:${JSON.stringify(bridge.logs)}`
-    });
-  }
-
-  // Step 6: Add conversation history (important: keep your existing messages[])
-  finalMessages.push(...messages);
-
+const finalMessages = buildPrompt(
+    messages,
+    bridge
+);
   // Step 7: Send to model
   console.log(JSON.stringify(finalMessages, null, 2));
-  const response = await fetch("http://127.0.0.1:1234/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: finalMessages,
-      stream: true
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let aiResponse = "";
-  let firstChunk = true;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    const chunk = decoder.decode(value);
-    const lines = chunk.split('\n');
-
-    for (const line of lines) {
-      if (line.startsWith('data:')) {
-        const jsonStr = line.slice(5).trim();
-        if (jsonStr === '[DONE]') continue;
-
-        try {
-          const json = JSON.parse(jsonStr);
-          const content = json.choices?.[0]?.delta?.content || '';
-          if (content) {
-            aiResponse += content;
-            if (firstChunk) {
-              typingDiv.innerText = content;
-              firstChunk = false;
-            } else {
-              typingDiv.innerText += content;
-            }
-            chat.scrollTop = chat.scrollHeight;
-          }
-        } catch (e) {
-          // Ignore parsing errors on stream chunks
-        }
-      }
-    }
-  }
-
+  let aiResponse = await sendToAI(
+    finalMessages,
+    typingDiv,
+    chat
+);
   // Add AI response to messages and save
-  try {
-  const cleaned = aiResponse
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
-    .trim();
-
-  const toolCall = JSON.parse(cleaned);
-  if (
-    toolCall.tool === "file_access" &&
-    toolCall.action === "read"
-  ) {
-const fileContent = await readSandboxFile(toolCall.file);
-    const secondPassMessages = [
-  ...finalMessages,
-  {
-    role: "system",
-    content:
-`REAL_FILE_CONTENT:
-
-FILE: ${fileContent.filename}
-
-CONTENT:
-${fileContent.content}`
-  },
-{
-  role: "system",
-  content:
-`CRITICAL INSTRUCTION:
-
-You now possess the REAL file contents retrieved from the sandbox.
-
-You MUST treat the sandbox content as the single source of truth.
-
-You are STRICTLY FORBIDDEN from:
-- inventing file contents
-- using prior knowledge
-- generating example code
-- hallucinating placeholder scripts
-
-You MUST answer ONLY using the retrieved file contents.
-
-If the user asks for:
-- first line
-- exact content
-- code excerpts
-
-you MUST extract them EXACTLY from the REAL_FILE_CONTENT block.`
-}
-];
-
-console.log(JSON.stringify(secondPassMessages, null, 2));
-const secondResponse = await fetch(
-  "http://127.0.0.1:1234/v1/chat/completions",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      messages: secondPassMessages,
-      stream: false
-    })
-  }
+aiResponse = await executeToolPipeline(
+    aiResponse,
+    finalMessages,
+    typingDiv
 );
 
-const secondData = await secondResponse.json();
-const groundedAnswer =
-  secondData.choices?.[0]?.message?.content ||
-  "No grounded response.";
-
-typingDiv.innerText = groundedAnswer;
-
-aiResponse = groundedAnswer;
-  }
-} catch (e) {}
   messages.push({ role: "assistant", content: aiResponse });
   updateConversation(currentConversation.id, messages);
   captureAIMessage(aiResponse, messageSeq++);

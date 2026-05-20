@@ -1,6 +1,13 @@
 ├── .editorconfig
 ├── .gitignore
 ├── Bone_Code/
+│   ├── AI/
+│   │   ├── ai_client.js
+│   │   ├── prompt_builder.js
+│   │   ├── stream_handler.js
+│   │   └── tool_executor.js
+│   ├── UI/
+│   │   └── sidebar_ui.js
 │   ├── css/
 │   │   └── style.css
 │   ├── go/
