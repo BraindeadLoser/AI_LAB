@@ -159,6 +159,7 @@ Only request files when necessary.`
   finalMessages.push(...messages);
 
   // Step 7: Send to model
+  console.log(JSON.stringify(finalMessages, null, 2));
   const response = await fetch("http://127.0.0.1:1234/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -260,6 +261,7 @@ you MUST extract them EXACTLY from the REAL_FILE_CONTENT block.`
 }
 ];
 
+console.log(JSON.stringify(secondPassMessages, null, 2));
 const secondResponse = await fetch(
   "http://127.0.0.1:1234/v1/chat/completions",
   {
