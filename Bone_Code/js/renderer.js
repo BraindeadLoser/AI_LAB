@@ -7,13 +7,12 @@ import { initializeTheme } from "../UI/Customization/theme_ui.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
-import customConsole from "./console.js";
-import {captureUserMessage,captureAIMessage,enableDevMode,disableDevMode} from "./logSystem.js";
+import {captureUserMessage,captureAIMessage} from "./logSystem.js";
+import { initializeDevelopMode } from "../Modes/Develop_mode/develop_mode.js";
+import { initializeConsoleToggle }
+from "../Modes/Develop_mode/console_toggle.js";
+import { logEvent } from "../Logging/Event_Logging/event_logger.js";
 import { buildBridgeContext } from "./Bridge.js";
-// Log events to the bottom console
-function logEvent(entry) {
-  customConsole.log(entry.type || 'info', 'app', entry.data || {});
-}
 //Test starts here
 //Test ends here
 const chat = document.getElementById("chat");
@@ -29,12 +28,7 @@ if (allConvs.length > 0) {
 } else {
   currentConversation = createConversation();
 }
-
 let messages = currentConversation.messages;
-
-let userColor = "#0b93f6";
-let aiColor = "#444654";
-let bgColor = "#343541";
 
 async function send() {
   const msg = input.value;
@@ -184,85 +178,8 @@ input.addEventListener("keydown", function (e) {
   }
 });
 
-document.getElementById("sendBtn").addEventListener("click", send);
-document.getElementById("consoleToggleBtn").addEventListener("click", () => {
-  const consoleDiv = document.getElementById('bottom-console');
-  if (consoleDiv.classList.contains('hidden')) {
-    consoleDiv.classList.remove('hidden');
-  } else {
-    consoleDiv.classList.add('hidden');
-  }
-});
-
-const devBtn = document.getElementById("devToggle");
-let devState = false;
-
-/**
- * Update develop mode state across all systems
- * Synchronizes: Main Process + Renderer Process + Console Singleton
- */
-async function updateDevelopMode(enabled) {
-    const consoleDiv = document.getElementById("bottom-console");
-    
-    try {
-        if (enabled) {
-            // Enable develop mode in main process
-            await enableDevMode();
-            
-            // Sync console singleton
-            customConsole.setDevelopMode(true);
-            // Update UI
-            devBtn.classList.remove("dev-off");
-            devBtn.classList.add("dev-on");
-            if (consoleDiv) {
-                consoleDiv.classList.remove("hidden");
-            }
-            devState = true;
-            // Log the mode change (will be captured now)
-            logEvent({ type: 'DEV_MODE', data: { status: 'enabled', timestamp: new Date().toISOString() } });
-            console.log("[DevMode] ✓ Develop mode ENABLED - All logging active");
-        } else {
-            // Disable develop mode in main process
-            await disableDevMode();
-            
-            // Sync console singleton
-            customConsole.setDevelopMode(false);
-            // Update UI
-            devBtn.classList.remove("dev-on");
-            devBtn.classList.add("dev-off");
-            if (consoleDiv) {
-                consoleDiv.classList.add("hidden");
-                consoleDiv.innerHTML = ""; // Clear logs
-            }
-            devState = false;
-            console.log("[DevMode] ✓ Develop mode DISABLED - Logging paused");
-        }
-    } catch (err) {
-        console.error("[DevMode] Error updating develop mode:", err);
-    }
-}
-
-devBtn.addEventListener("click", () => {
-    updateDevelopMode(!devState);
-});
-
-/**
- * Initialize develop mode state on app load
- * Syncs renderer with main process state
- */
-async function initializeDevelopMode() {
-    try {
-        const mainProcessState = await window.ipc?.getDevelopMode?.();
-        customConsole.setDevelopMode(mainProcessState || false);
-        console.log(`[Init] Develop mode initialized from main process: ${mainProcessState}`);
-    } catch (err) {
-        console.error("[Init] Failed to initialize develop mode:", err);
-        customConsole.setDevelopMode(false);
-    }
-}
-
-// Initialize on load
 initializeDevelopMode();
+initializeConsoleToggle();
 
 window.newChat = newChat;
 window.getAllConversations = getAllConversations;

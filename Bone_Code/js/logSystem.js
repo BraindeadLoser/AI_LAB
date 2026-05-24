@@ -1,3 +1,6 @@
+import {captureClickEvent,captureUserMessageEvent,
+  captureAIMessageEvent,captureErrorEvent,
+  captureUnhandledPromiseEvent, visualizeEvent} from "../Logging/Event_Logging/event_logger.js";
 // logSystem.js (Renderer-safe, DevMode-synchronized via IPC)
 
 let isDevMode = false;
@@ -55,14 +58,11 @@ async function addLog(entry) {
 // --------------------------------------------------
 
 document.addEventListener("click", (e) => {
-  addLog({
-    type: "CLICK",
-    event: "ui_interaction",
-    details: {
-      target: e.target.id || e.target.tagName,
-      class: e.target.className || null
-    }
-  });
+  const entry = captureClickEvent(e);
+
+  visualizeEvent(entry);
+
+  addLog(entry);
 });
 
 // --------------------------------------------------
@@ -70,14 +70,9 @@ document.addEventListener("click", (e) => {
 // --------------------------------------------------
 
 function captureUserMessage(content, index) {
-  addLog({
-    type: "USER_MESSAGE",
-    event: `message_${index}`,
-    details: {
-      content,
-      index
-    }
-  });
+  addLog(
+    captureUserMessageEvent(content, index)
+  );
 }
 
 // --------------------------------------------------
@@ -85,46 +80,35 @@ function captureUserMessage(content, index) {
 // --------------------------------------------------
 
 function captureAIMessage(content, index) {
-  addLog({
-    type: "AI_MESSAGE",
-    event: `message_${index}`,
-    details: {
-      content,
-      index
-    }
-  });
+  addLog(
+    captureAIMessageEvent(content, index)
+  );
 }
 
 // --------------------------------------------------
 // Event Capture: Runtime Errors
 // --------------------------------------------------
 
-window.addEventListener("error", (err) => {
-  addLog({
-    type: "ERROR",
-    event: "runtime",
-    details: {
-      message: err.message,
-      file: err.filename || "unknown",
-      line: err.lineno || "unknown",
-      col: err.colno || "unknown"
-    }
-  });
-});
+function captureError(err) {
+  addLog(
+    captureErrorEvent(err)
+  );
+}
+
+window.addEventListener("error", captureError);
 
 // --------------------------------------------------
 // Event Capture: Unhandled Promises
 // --------------------------------------------------
 
-window.addEventListener("unhandledrejection", (event) => {
-  addLog({
-    type: "ERROR",
-    event: "unhandled_promise",
-    details: {
-      reason: event.reason?.message || String(event.reason)
-    }
-  });
-});
+window.addEventListener(
+  "unhandledrejection",
+  (event) => {
+    addLog(
+      captureUnhandledPromiseEvent(event)
+    );
+  }
+);
 
 // --------------------------------------------------
 // Lifecycle Log
