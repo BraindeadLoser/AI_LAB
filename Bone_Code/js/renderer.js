@@ -1,18 +1,14 @@
 import { sendToAI } from "../AI/ai_client.js";
 import { buildPrompt } from "../AI/prompt_builder.js";
 import { executeToolPipeline } from "../AI/tool_executor.js";
-import { renderConversations } from "../UI/sidebar_ui.js";
-import { savePreferences, loadPreferences } from "./storage.js";
+import {renderConversations,toggleSidebar,enableResize,initializeSidebar} from "../UI/Panels/sidebar_ui.js";
+import {addMessage,createTypingIndicator} from "../UI/Chat/chat_ui.js";
+import { initializeTheme } from "../UI/Customization/theme_ui.js";
 import { createConversation, updateConversation } from "./conversations.js";
 import { getAllConversations } from "./conversations.js";
 import { deleteConversation } from "./conversations.js";
 import customConsole from "./console.js";
-import {
-  captureUserMessage,
-  captureAIMessage,
-  enableDevMode,
-  disableDevMode
-} from "./logSystem.js";
+import {captureUserMessage,captureAIMessage,enableDevMode,disableDevMode} from "./logSystem.js";
 import { buildBridgeContext } from "./Bridge.js";
 // Log events to the bottom console
 function logEvent(entry) {
@@ -40,55 +36,30 @@ let userColor = "#0b93f6";
 let aiColor = "#444654";
 let bgColor = "#343541";
 
-const prefs = loadPreferences();
-
-if (prefs) {
-    if (prefs.bgColor) {
-        bgColor = prefs.bgColor;
-        document.body.style.backgroundColor = bgColor;
-    }
-
-    if (prefs.userColor) {
-        userColor = prefs.userColor;
-    }
-
-    if (prefs.aiColor) {
-        aiColor = prefs.aiColor;
-    }
-}
-
-function addMessage(text, type) {
-  const div = document.createElement("div");
-div.className = "msg " + type;
-
-if (type === "user") div.style.background = userColor;
-if (type === "ai") div.style.background = aiColor;  
-div.innerHTML = marked.parse(text);
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-  
-  // Log message in JSON format
-if (type === "user") {
-  captureUserMessage(text, messageSeq++);
-} else if (type === "ai") {
-  captureAIMessage(text, messageSeq++);
-}
-}
 async function send() {
   const msg = input.value;
   if (!msg) return;
 
-  addMessage(msg, "user");
+  addMessage({
+  chat,
+  text: msg,
+  type: "user",
+      userColor: document.getElementById("userColor").value,
+      aiColor: document.getElementById("aiColor").value,
+  captureUserMessage,
+  captureAIMessage,
+  getMessageSeq: () => messageSeq,
+  incrementMessageSeq: () => {},
+  shouldLog: false
+});
   messages.push({ role: "user", content: msg });
   updateConversation(currentConversation.id, messages);
   input.value = "";
 
-const typingDiv = document.createElement("div");
-typingDiv.className = "msg ai";
-typingDiv.style.background = aiColor;
-typingDiv.innerText = "...";
-  chat.appendChild(typingDiv);
-  chat.scrollTop = chat.scrollHeight;
+const typingDiv = createTypingIndicator({
+  chat,
+  aiColor: document.getElementById("aiColor").value
+});
 
 try {
   // Step 1: Build bridge context
@@ -124,6 +95,26 @@ aiResponse = await executeToolPipeline(
   typingDiv.innerText = "Error occurred";
 }
 }
+
+function restoreMessages(targetMessages = messages) {
+  chat.innerHTML = "";
+
+targetMessages.forEach(m => {
+    addMessage({
+      chat,
+      text: m.content,
+      type: m.role === "user" ? "user" : "ai",
+      userColor,
+      aiColor,
+      captureUserMessage: () => {},
+      captureAIMessage: () => {},
+      getMessageSeq: () => 0,
+      incrementMessageSeq: () => {},
+      shouldLog: false
+    });
+  });
+}
+
 function newChat() {
   currentConversation = createConversation();
   messages = currentConversation.messages;
@@ -132,121 +123,6 @@ function newChat() {
   logEvent({ type: 'ui_click', data: { target: 'new_chat_button' } });
 }
 
-function renderConversations() {
-  const list = document.getElementById("chatList");
-  list.innerHTML = "";
-
-  const conversations = getAllConversations();
-
-conversations.forEach(conv => {
-  const item = document.createElement("div");
-  
-item.className = "chat-item";
-
-if (conv.id === currentConversation.id) {
-  item.style.background = "#0a0b14";
-}  
-item.innerHTML = "";
-
-const title = document.createElement("span");
-title.innerText = conv.title || "New Chat";
-
-const menuBtn = document.createElement("button");
-menuBtn.innerText = "⋯"; // three horizontal dots
-menuBtn.style.float = "right";
-menuBtn.style.background = "transparent";
-menuBtn.style.color = "ccc";
-menuBtn.style.border = "none";
-menuBtn.style.cursor = "pointer";
-
-item.appendChild(title);
-item.appendChild(menuBtn);
-
-// dropdown container
-const dropdown = document.createElement("div");
-dropdown.className = "dropdown-menu";
-dropdown.style.display = "none"; // hidden by default
-dropdown.style.position = "absolute";
-dropdown.style.background = "#2a2b32";
-dropdown.style.color = "white";
-dropdown.style.padding = "5px";
-dropdown.style.borderRadius = "4px";
-
-const delOption = document.createElement("div");
-delOption.innerText = "Delete";
-delOption.onclick = (e) => {
-  e.stopPropagation();
-  const isActive = currentConversation.id === conv.id;
-  logEvent({ type: 'ui_click', data: { target: 'delete_conversation' } });
-  deleteConversation(conv.id);
-
-  const remaining = getAllConversations();
-  if (isActive) {
-    currentConversation = remaining.length > 0 ? remaining[0] : createConversation();
-    messages = currentConversation.messages;
-    messageSeq = 0;
-    chat.innerHTML = "";
-    messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "ai"));
-  }
-  renderConversations();
-};
-
-// rename option
-const renameOption = document.createElement("div");
-renameOption.innerText = "Rename";
-renameOption.onclick = (e) => {
-  e.stopPropagation();
-
-  // create inline input
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = conv.title || "New Chat";
-  input.style.width = "120px";
-
-  // replace renameOption with input temporarily
-  dropdown.replaceChild(input, renameOption);
-  // prevent dropdown from closing when clicking inside input
-  input.addEventListener("click", (ev) => {
-    ev.stopPropagation();
-  });
-  // handle Enter key
-  input.addEventListener("keydown", (ev) => {
-    if (ev.key === "Enter") {
-      const newTitle = input.value.trim();
-      if (newTitle !== "") {
-        logEvent({ type: 'ui_click', data: { target: 'rename_conversation' } });
-        conv.title = newTitle;
-        updateConversation(conv.id, messages);
-        renderConversations();
-      }
-    }
-  });
-};
-dropdown.appendChild(delOption);
-dropdown.appendChild(renameOption);
-item.appendChild(dropdown);
-// toggle dropdown on menuBtn click
-menuBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
-});
-  item.addEventListener("click", () => {
-    currentConversation = conv;
-    messages = conv.messages;
-    messageSeq = 0;
-    logEvent({ type: 'ui_click', data: { target: 'conversation_item' } });
-    chat.innerHTML = "";
-
-    messages.forEach(m => {
-      addMessage(m.content, m.role === "user" ? "user" : "ai");
-    });
-      renderConversations(); // 🔥 critical fix
-      dropdown.style.display = "none";
-  });
-
-  list.appendChild(item);
-});
-}
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".dropdown-menu") && !e.target.closest("button")) {
     document.querySelectorAll(".dropdown-menu").forEach(menu => {
@@ -255,36 +131,51 @@ document.addEventListener("click", (e) => {
   }
 });
 
-function togglePanel() {
-  const panel = document.getElementById("panel");
-  panel.style.display =
-    panel.style.display === "none" ? "block" : "none";
-}
-
-function enableResize() {
-  const sidebar = document.getElementById("sidebar");
-  const resizer = document.getElementById("resizer");
-  const main = document.getElementById("main");
-
-  let isResizing = false;
-
-  resizer.addEventListener("mousedown", () => {
-    isResizing = true;
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (!isResizing) return;
-
-    const newWidth = e.clientX;
-    sidebar.style.width = newWidth + "px";
-    main.style.marginLeft = newWidth + "px";
-  });
-
-  document.addEventListener("mouseup", () => {
-    isResizing = false;
-  });
-}
 enableResize();
+
+initializeSidebar({
+  toggleSidebar,
+  newChat,
+  renderArgs: () => ({
+    currentConversation,
+    restoreMessages,
+    userColor: document.getElementById("userColor").value,
+    aiColor: document.getElementById("aiColor").value,
+    setCurrentConversation: (conv) => {
+      currentConversation = conv;
+    },
+    messages,
+    setMessages: (newMessages) => {
+      messages = newMessages;
+    },
+    messageSeq,
+    setMessageSeq: (seq) => {
+      messageSeq = seq;
+    },
+    chat,
+    addMessage,
+    createConversation,
+    logEvent
+  })
+});
+
+initializeTheme({
+  getUserColor: () => userColor,
+  setUserColor: (color) => {
+    userColor = color;
+  },
+
+  getAIColor: () => aiColor,
+  setAIColor: (color) => {
+    aiColor = color;
+  },
+
+  getBgColor: () => bgColor,
+  setBgColor: (color) => {
+    bgColor = color;
+  }
+});
+
 input.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -293,50 +184,6 @@ input.addEventListener("keydown", function (e) {
   }
 });
 
-function toggleSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const main = document.getElementById("main");
-  logEvent({ type: 'ui_click', data: { target: 'toggle_sidebar' } });
-
-  if (sidebar.style.display === "none") {
-    sidebar.style.display = "block";
-    main.style.marginLeft = "250px";
-  } else {
-    sidebar.style.display = "none";
-    main.style.marginLeft = "0";
-  }
-}
-
-
-function applyColors() {
-    userColor = document.getElementById("userColor").value;
-    aiColor = document.getElementById("aiColor").value;
-    bgColor = document.getElementById("bgColor").value;
-
-    // apply background
-    document.body.style.background = bgColor;
-
-    // update existing messages
-document.querySelectorAll(".msg.user").forEach(el => {
-  el.style.background = userColor;
-});
-
-document.querySelectorAll(".msg.ai").forEach(el => {
-  el.style.background = aiColor;
-});
-
-
-    // ✅ SAVE
-    savePreferences({
-        userColor,
-        aiColor,
-        bgColor
-    });
-}
-
-document.getElementById("toggleBtn").addEventListener("click", toggleSidebar);
-document.getElementById("customizeBtn").addEventListener("click", togglePanel);
-document.getElementById("applyBtn").addEventListener("click", applyColors);
 document.getElementById("sendBtn").addEventListener("click", send);
 document.getElementById("consoleToggleBtn").addEventListener("click", () => {
   const consoleDiv = document.getElementById('bottom-console');
@@ -345,10 +192,6 @@ document.getElementById("consoleToggleBtn").addEventListener("click", () => {
   } else {
     consoleDiv.classList.add('hidden');
   }
-});
-document.getElementById("newChatBtn").addEventListener("click", () => {
-  newChat();
-  renderConversations();
 });
 
 const devBtn = document.getElementById("devToggle");
@@ -423,4 +266,24 @@ initializeDevelopMode();
 
 window.newChat = newChat;
 window.getAllConversations = getAllConversations;
-renderConversations();
+renderConversations({
+    currentConversation,
+    restoreMessages,
+userColor: document.getElementById("userColor").value,
+aiColor: document.getElementById("aiColor").value,
+    setCurrentConversation: (conv) => {
+        currentConversation = conv;
+    },
+    messages,
+    setMessages: (newMessages) => {
+        messages = newMessages;
+    },
+    messageSeq,
+    setMessageSeq: (seq) => {
+        messageSeq = seq;
+    },
+    chat,
+    addMessage,
+    createConversation,
+    logEvent
+});

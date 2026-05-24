@@ -7,7 +7,13 @@
 │   │   ├── stream_handler.js
 │   │   └── tool_executor.js
 │   ├── UI/
-│   │   └── sidebar_ui.js
+│   │   ├── Buttons/
+│   │   ├── Chat/
+│   │   │   └── chat_ui.js
+│   │   ├── Customization/
+│   │   │   └── theme_ui.js
+│   │   └── Panels/
+│   │       └── sidebar_ui.js
 │   ├── css/
 │   │   └── style.css
 │   ├── go/
@@ -61,4 +67,5 @@
 ├── package.json
 ├── preload.js
 ├── runtime_inspector.py
-└── test_exec.js
+├── test_exec.js
+└── ~$ogress Report.docx
