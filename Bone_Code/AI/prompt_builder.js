@@ -1,4 +1,4 @@
-import { listAllowedFiles } from "../js/Fetch_Files/file_access.js";
+import { listAllowedFiles } from "../Fetch_Files/file_access.js";
 
 export function buildPrompt(messages, bridge) {
 

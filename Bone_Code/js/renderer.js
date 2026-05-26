@@ -13,13 +13,31 @@ import { initializeConsoleToggle }
 from "../Modes/Develop_mode/console_toggle.js";
 import { logEvent } from "../Logging/Event_Logging/event_logger.js";
 import { buildBridgeContext } from "./Bridge.js";
+import { readSandboxFileLines } from "../Fetch_Files/file_access.js";
 //Test starts here
+const retrieval =
+await readSandboxFileLines(
+  "sample.py",
+  5,
+  10
+);
+
+const patch =
+createPatch({
+  retrieval,
+  newContent
+});
 //Test ends here
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
 // Message sequence tracking for JSON logs
 let messageSeq = 0;
+
+// Theme color variables
+let userColor = "#f0f0f0";
+let aiColor = "#e0e0e0";
+let bgColor = "#ffffff";
 
 const allConvs = getAllConversations();
 let currentConversation;

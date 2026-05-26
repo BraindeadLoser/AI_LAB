@@ -1,4 +1,4 @@
-import { readSandboxFile } from "../js/Fetch_Files/file_access.js";
+import { readSandboxFile } from "../Fetch_Files/file_access.js";
 
 export async function executeToolPipeline(
     aiResponse,

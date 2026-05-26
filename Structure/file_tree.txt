@@ -6,6 +6,21 @@
 │   │   ├── prompt_builder.js
 │   │   ├── stream_handler.js
 │   │   └── tool_executor.js
+│   ├── App_Flow/
+│   │   ├── new_chat.js
+│   │   ├── restore_messages.js
+│   │   └── send_message.js
+│   ├── App_State/
+│   │   └── chat_state.js
+│   ├── Edit_Files/
+│   │   ├── apply_patch.js
+│   │   ├── patch_engine.js
+│   │   ├── save_changes.js
+│   │   └── validation_runner.js
+│   ├── Fetch_Files/
+│   │   ├── file_access.js
+│   │   ├── retrieval_index.js
+│   │   └── symbol_parser.js
 │   ├── Logging/
 │   │   ├── Code_Logging/
 │   │   └── Event_Logging/
@@ -21,6 +36,9 @@
 │   │   │   └── chat_ui.js
 │   │   ├── Customization/
 │   │   │   └── theme_ui.js
+│   │   ├── Event_Bindings/
+│   │   │   ├── dropdown_handler.js
+│   │   │   └── keyboard_events.js
 │   │   └── Panels/
 │   │       └── sidebar_ui.js
 │   ├── css/
@@ -30,14 +48,6 @@
 │   │   └── index.html
 │   ├── js/
 │   │   ├── Bridge.js
-│   │   ├── Edit_Files/
-│   │   │   ├── apply_patch.js
-│   │   │   ├── save_changes.js
-│   │   │   └── validation_runner.js
-│   │   ├── Fetch_Files/
-│   │   │   ├── file_access.js
-│   │   │   ├── retrieval_index.js
-│   │   │   └── symbol_parser.js
 │   │   ├── console.js
 │   │   ├── conversations.js
 │   │   ├── logSystem.js
