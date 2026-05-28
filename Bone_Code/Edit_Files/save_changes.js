@@ -1,28 +1,15 @@
 "use strict";
 
-/**
- * save_changes.js
- *
- * Purpose:
- * Persist approved changes to disk
- * only after user acceptance.
- *
- * Input:
- * workingCopy
- *
- * Output:
- * {
- *   success,
- *   file,
- *   status
- * }
- */
+import {
+  stopValidation
+} from "./validation_runner.js";
 
 /**
  * Save approved changes.
  */
 async function saveChanges(
-  workingCopy
+  workingCopy,
+  containerId
 ) {
   validateWorkingCopy(
     workingCopy
@@ -37,76 +24,84 @@ async function saveChanges(
         workingCopy.patchedContent
     });
 
+    if (containerId) {
+      await stopValidation(
+        containerId
+      );
+    }
+
     return {
       success: true,
-
       file:
         workingCopy.file,
-
-      status:
-        "saved"
+      status: "saved"
     };
+
   } catch (err) {
     return {
       success: false,
-
       error:
         err.message ||
         String(err),
-
-      status:
-        "failed"
+      status: "failed"
     };
   }
 }
 
 /**
  * Reject changes.
- *
- * Nothing is written.
- * Memory state gets discarded.
  */
 async function rejectChanges(
   containerId
 ) {
-  if (containerId) {
-    await window.ipc.stopValidationContainer(
-      containerId
-    );
-  }
+  try {
+    if (containerId) {
+      await stopValidation(
+        containerId
+      );
+    }
 
-  return {
-    success: true,
-    status: "rejected"
-  };
+    return {
+      success: true,
+      status: "rejected"
+    };
+
+  } catch (err) {
+    return {
+      success: false,
+      error:
+        err.message ||
+        String(err),
+      status: "failed"
+    };
+  }
 }
 
-/**
- * Validate working copy.
- */
 function validateWorkingCopy(
   workingCopy
 ) {
-  if (
-    !workingCopy ||
-    typeof workingCopy !== "object"
-  ) {
+  if (!workingCopy) {
     throw new Error(
-      "save_changes: invalid workingCopy."
+      "save_changes: workingCopy required."
     );
   }
 
-  const requiredFields = [
-    "file",
-    "patchedContent"
-  ];
+  if (
+    typeof workingCopy.file !==
+    "string"
+  ) {
+    throw new Error(
+      "save_changes: invalid file."
+    );
+  }
 
-  for (const field of requiredFields) {
-    if (!(field in workingCopy)) {
-      throw new Error(
-        `save_changes: missing '${field}'.`
-      );
-    }
+  if (
+    typeof workingCopy.patchedContent !==
+    "string"
+  ) {
+    throw new Error(
+      "save_changes: invalid patchedContent."
+    );
   }
 }
 

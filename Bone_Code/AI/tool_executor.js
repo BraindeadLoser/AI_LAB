@@ -1,4 +1,6 @@
 import { readSandboxFile } from "../Fetch_Files/file_access.js";
+import { finalizeEdit } from "../Edit_Files/edit_pipeline.js";
+import {renderEditApprovalButtons} from "../UI/Buttons/editApprovalButtons.js";
 
 export async function executeToolPipeline(
     aiResponse,
@@ -86,6 +88,52 @@ you MUST extract them EXACTLY from the REAL_FILE_CONTENT block.`
 
             return groundedAnswer;
         }
+        
+if (
+    toolCall.tool === "edit_pipeline"
+) {
+
+    console.log(
+        "[TOOL_EXECUTOR] edit_pipeline triggered"
+    );
+
+    const result =
+        await finalizeEdit(
+            toolCall.file,
+            toolCall.instruction
+        );
+
+    console.log(
+        "[TOOL_EXECUTOR] edit_pipeline result:",
+        result
+    );
+
+    if (
+        result.success &&
+        result.validationResult?.success
+    ) {
+
+        typingDiv.innerText =
+            "Edit proposed successfully. Review and approve.";
+
+        renderEditApprovalButtons(
+            typingDiv,
+            result.workingCopy,
+            result.validationResult.containerId
+        );
+
+    } else {
+
+        typingDiv.innerText =
+            "Edit validation failed.";
+    }
+
+    return JSON.stringify(
+        result,
+        null,
+        2
+    );
+}
 
     } catch (e) {}
 

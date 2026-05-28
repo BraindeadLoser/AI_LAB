@@ -4,68 +4,42 @@
  * apply_patch.js
  *
  * Purpose:
- * Apply a patch object in memory only.
- *
- * Input patch schema:
- * {
- *   file,
- *   operation: "replace",
- *   oldContent,
- *   newContent,
- *   diff
- * }
- *
- * Output:
- * {
- *   file,
- *   originalContent,
- *   patchedContent,
- *   patch,
- *   applied
- * }
+ * Create an in-memory working copy
+ * using original content +
+ * AI edited content.
  */
-
-/**
- * Validate incoming patch.
- */
-function validatePatch(patch) {
-  if (!patch || typeof patch !== "object") {
-    throw new Error(
-      "apply_patch: patch object required."
-    );
-  }
-
-  const requiredFields = [
-    "file",
-    "operation",
-    "oldContent",
-    "newContent",
-    "diff"
-  ];
-
-  for (const field of requiredFields) {
-    if (!(field in patch)) {
-      throw new Error(
-        `apply_patch: missing '${field}'.`
-      );
-    }
-  }
-
-  if (patch.operation !== "replace") {
-    throw new Error(
-      "apply_patch: unsupported operation."
-    );
-  }
-}
 
 /**
  * Apply patch in memory.
  */
 function applyPatch(patch) {
-  validatePatch(patch);
+  if (!patch) {
+    throw new Error(
+      "apply_patch: patch required."
+    );
+  }
 
-  const workingCopy = {
-    file: patch.file,
+  if (
+    typeof patch.oldContent !==
+    "string"
+  ) {
+    throw new Error(
+      "apply_patch: invalid oldContent."
+    );
+  }
+
+  if (
+    typeof patch.newContent !==
+    "string"
+  ) {
+    throw new Error(
+      "apply_patch: invalid newContent."
+    );
+  }
+
+  return {
+    file:
+      patch.file,
 
     originalContent:
       patch.oldContent,
@@ -73,12 +47,8 @@ function applyPatch(patch) {
     patchedContent:
       patch.newContent,
 
-    patch,
-
     applied: true
   };
-
-  return workingCopy;
 }
 
 export {

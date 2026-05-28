@@ -120,6 +120,9 @@ ipcMain.handle("read-sandbox-file", async (event, filename) => {
     );
   });
 });
+
+app.commandLine.appendSwitch("remote-debugging-port", "9222");
+
 app.whenReady().then(createWindow);
 app.on("window-all-closed", () => {
   if (db) db.close();

@@ -15,18 +15,7 @@ import { logEvent } from "../Logging/Event_Logging/event_logger.js";
 import { buildBridgeContext } from "./Bridge.js";
 import { readSandboxFileLines } from "../Fetch_Files/file_access.js";
 //Test starts here
-const retrieval =
-await readSandboxFileLines(
-  "sample.py",
-  5,
-  10
-);
-
-const patch =
-createPatch({
-  retrieval,
-  newContent
-});
+import { finalizeEdit } from "../Edit_Files/edit_pipeline.js";
 //Test ends here
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");

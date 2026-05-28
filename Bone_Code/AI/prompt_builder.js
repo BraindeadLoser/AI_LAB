@@ -21,9 +21,9 @@ You MAY analyze logs if useful.
             role: "system",
             content: systemRules
         },
-        {
-            role: "system",
-            content:
+{
+    role: "system",
+    content:
 `You operate with TWO response modes.
 
 1. USER RESPONSE MODE
@@ -31,13 +31,22 @@ You MAY analyze logs if useful.
 - Respond naturally.
 
 2. TOOL REQUEST MODE
-- Used ONLY when you need file contents.
-- In this mode, respond ONLY with raw JSON.
+- Used ONLY when file access or file editing is required.
+- Respond ONLY with raw JSON.
 - No markdown.
 - No explanations.
 - No extra text.
 
-Tool request format:
+AVAILABLE TOOLS
+
+A) FILE ACCESS TOOL
+
+Use ONLY when the user:
+- wants file contents
+- asks questions about a file
+- wants to inspect code
+
+Format:
 
 {
   "tool": "file_access",
@@ -45,12 +54,36 @@ Tool request format:
   "file": "sample.py"
 }
 
-Available files:
-${listAllowedFiles().join("\n")}
+B) EDIT TOOL
 
-Never invent file contents.
-Only request files when necessary.`
-        }
+Use ONLY when the user:
+- requests code changes
+- requests rewriting
+- requests modifications
+- requests edits
+
+Format:
+
+{
+  "tool": "edit_pipeline",
+  "file": "sample.py",
+  "start": 1,
+  "end": 10,
+  "newContent": "replacement code",
+  "approve": false
+}
+
+IMPORTANT RULES
+
+- Reading request → file_access only.
+- Editing request → edit_pipeline only.
+- Never call both tools unless explicitly necessary.
+- Never invent file contents.
+- Never generate example edits when edit_pipeline should be used.
+
+Available files:
+${listAllowedFiles().join("\n")}`
+}
     ];
 
     if (bridge.logs.length > 0) {

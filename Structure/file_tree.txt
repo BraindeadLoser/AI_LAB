@@ -14,6 +14,7 @@
 │   │   └── chat_state.js
 │   ├── Edit_Files/
 │   │   ├── apply_patch.js
+│   │   ├── edit_pipeline.js
 │   │   ├── patch_engine.js
 │   │   ├── save_changes.js
 │   │   └── validation_runner.js
@@ -32,6 +33,7 @@
 │   │       └── develop_mode.js
 │   ├── UI/
 │   │   ├── Buttons/
+│   │   │   └── editApprovalButtons.js
 │   │   ├── Chat/
 │   │   │   └── chat_ui.js
 │   │   ├── Customization/
@@ -73,7 +75,10 @@
 │   │   ├── sample.py
 │   │   └── sample.rb
 │   └── Simple_Tests/
+│       └── edit_pipeline_test.py
 ├── Tools/
+│   ├── Docker_Tools/
+│   │   └── validation_container.py
 │   ├── docker_testing.py
 │   ├── inspector.py
 │   ├── refresh_db.py
@@ -86,4 +91,5 @@
 ├── package.json
 ├── preload.js
 ├── runtime_inspector.py
-└── test_exec.js
+├── test_exec.js
+└── ~$ogress Report.docx

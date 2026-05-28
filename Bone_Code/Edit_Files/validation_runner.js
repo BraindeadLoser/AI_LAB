@@ -4,24 +4,11 @@
  * validation_runner.js
  *
  * Purpose:
- * Run patched code in a temporary Docker container
- * without touching the original running app.
- *
- * Input:
- * workingCopy
- *
- * Output:
- * {
- *   success,
- *   containerId,
- *   status
- * }
+ * Bridge between edit pipeline
+ * and validation_container.py
  */
 
-/**
- * Launch temporary validation container.
- */
-async function startValidation(
+async function runValidation(
   workingCopy
 ) {
   validateWorkingCopy(
@@ -39,23 +26,36 @@ async function startValidation(
       });
 
     return {
-      success: true,
+      success:
+        result.success,
 
       containerId:
-        result.containerId,
+        result.containerId || null,
+
+      logs:
+        result.logs || [],
+
+      errors:
+        result.errors || [],
 
       status:
-        "running"
+        result.status
     };
+
   } catch (err) {
     return {
       success: false,
 
-      error:
-        err.message || String(err),
+      containerId: null,
 
-      status:
-        "failed"
+      logs: [],
+
+      errors: [
+        err.message ||
+        String(err)
+      ],
+
+      status: "failed"
     };
   }
 }
@@ -72,14 +72,9 @@ async function stopValidation(
     );
   }
 
-  await window.ipc.stopValidationContainer(
+  return await window.ipc.stopValidationContainer(
     containerId
   );
-
-  return {
-    success: true,
-    status: "stopped"
-  };
 }
 
 /**
@@ -88,31 +83,32 @@ async function stopValidation(
 function validateWorkingCopy(
   workingCopy
 ) {
-  if (
-    !workingCopy ||
-    typeof workingCopy !== "object"
-  ) {
+  if (!workingCopy) {
     throw new Error(
-      "validation_runner: invalid workingCopy."
+      "validation_runner: workingCopy required."
     );
   }
 
-  const requiredFields = [
-    "file",
-    "patchedContent",
-    "originalContent"
-  ];
+  if (
+    typeof workingCopy.file !==
+    "string"
+  ) {
+    throw new Error(
+      "validation_runner: invalid file."
+    );
+  }
 
-  for (const field of requiredFields) {
-    if (!(field in workingCopy)) {
-      throw new Error(
-        `validation_runner: missing '${field}'.`
-      );
-    }
+  if (
+    typeof workingCopy.patchedContent !==
+    "string"
+  ) {
+    throw new Error(
+      "validation_runner: invalid patchedContent."
+    );
   }
 }
 
 export {
-  startValidation,
+  runValidation,
   stopValidation
 };

@@ -188,3 +188,43 @@ body {
     background-color: green;
 }
 
+/* Container for dual buttons */
+.edit-approval-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+/* Accept button styling */
+.accept-btn {
+  background-color: #4CAF50; /* green */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+}
+
+.accept-btn:hover {
+  background-color: #45a049;
+}
+
+/* Reject button styling */
+.reject-btn {
+  background-color: #f44336; /* red */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+}
+
+.reject-btn:hover {
+  background-color: #d32f2f;
+}
+

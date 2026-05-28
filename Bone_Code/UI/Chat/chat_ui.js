@@ -2,6 +2,7 @@ export function addMessage({
   chat,
   text,
   type,
+  proposal = null,
   userColor,
   aiColor,
   captureUserMessage,
@@ -23,9 +24,8 @@ export function addMessage({
   }
 
   div.innerHTML = marked.parse(text);
-
+  
   chat.appendChild(div);
-
   chat.scrollTop = chat.scrollHeight;
 
 if (shouldLog) {
@@ -47,11 +47,10 @@ export function createTypingIndicator({
   const typingDiv = document.createElement("div");
 
   typingDiv.className = "msg ai";
-  typingDiv.style.background = aiColor;
+  typingDiv.style.background = aiColor;   
   typingDiv.innerText = "...";
 
   chat.appendChild(typingDiv);
-
   chat.scrollTop = chat.scrollHeight;
 
   return typingDiv;
