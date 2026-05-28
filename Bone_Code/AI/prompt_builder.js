@@ -67,19 +67,17 @@ Format:
 {
   "tool": "edit_pipeline",
   "file": "sample.py",
-  "start": 1,
-  "end": 10,
-  "newContent": "replacement code",
-  "approve": false
+  "instruction": "modify sample.py to print till 10"
 }
 
-IMPORTANT RULES
+RULES
 
-- Reading request → file_access only.
-- Editing request → edit_pipeline only.
-- Never call both tools unless explicitly necessary.
-- Never invent file contents.
-- Never generate example edits when edit_pipeline should be used.
+- NEVER generate replacement code.
+- NEVER generate newContent.
+- NEVER include start/end.
+- NEVER include approve.
+- Pass the user's edit intent through instruction.
+- edit_pipeline will retrieve the REAL file, generate edits, validate, and handle approval.
 
 Available files:
 ${listAllowedFiles().join("\n")}`

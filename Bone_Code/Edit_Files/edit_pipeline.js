@@ -1,6 +1,6 @@
 "use strict";
 
-import { readSandboxFileLines } from "../Fetch_Files/file_access.js";
+import {readSandboxFile} from "../Fetch_Files/file_access.js";
 import { createPatch } from "../Edit_Files/patch_engine.js";
 import { applyPatch } from "../Edit_Files/apply_patch.js";
 import { runValidation } from "../Edit_Files/validation_runner.js";
@@ -9,6 +9,14 @@ async function generateEditContent(
   retrieval,
   instruction
 ) {
+  console.log(
+  "[EDIT_PIPELINE] LM input:",
+  {
+    retrievalContent:
+      retrieval?.content,
+    instruction
+  }
+);
   const response = await fetch(
     "http://127.0.0.1:1234/v1/chat/completions",
     {
@@ -54,10 +62,14 @@ ${retrieval.content}`
   const data =
     await response.json();
 
-  return (
-    data?.choices?.[0]
-      ?.message?.content || ""
-  ).trim();
+const raw =
+  data?.choices?.[0]
+    ?.message?.content || "";
+
+return raw
+  .replace(/```python/g, "")
+  .replace(/```/g, "")
+  .trim();
 }
 
 export async function finalizeEdit(
@@ -67,13 +79,20 @@ export async function finalizeEdit(
   console.log(
     "[EDIT_PIPELINE] finalizeEdit triggered"
   );
+  console.log(
+  "[EDIT_PIPELINE] inputs:",
+  {
+    filename,
+    instruction
+  }
+);
 
   try {
     // 1. Retrieve real file content
-    const retrieval =
-      await readSandboxFileLines(
-        filename
-      );
+const retrieval =
+  await readSandboxFile(
+    filename
+  );
 
     // 2. Generate edited code
     const editedContent =

@@ -91,5 +91,4 @@
 ├── package.json
 ├── preload.js
 ├── runtime_inspector.py
-├── test_exec.js
-└── ~$ogress Report.docx
+└── test_exec.js
