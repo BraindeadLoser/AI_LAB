@@ -70,30 +70,56 @@ def stop_validation_container(
     container_id
 ):
     """
-    Stop and cleanup validation container.
+    Stop and remove validation container.
     """
-    if container_id not in ACTIVE_CONTAINERS:
+
+    try:
+        container = (
+            client.containers.get(
+                container_id
+            )
+        )
+
+        container.stop()
+
+        container.remove(
+            force=True
+        )
+
+        return {
+            "success": True,
+            "status": "stopped"
+        }
+
+    except Exception as err:
+
         return {
             "success": False,
-            "status": "not_found"
+            "status": "failed",
+            "error": str(err)
         }
-    data = ACTIVE_CONTAINERS[
-        container_id
-    ]
-    container = data["container"]
-    temp_dir = data["temp_dir"]
-    try:
-        container.stop()
-        container.remove(force=True)
-    finally:
-        shutil.rmtree(
-            temp_dir,
-            ignore_errors=True
+
+if __name__ == "__main__":
+    import sys
+    import json
+
+    command = sys.argv[1]
+
+    if command == "start":
+        payload = json.loads(sys.argv[2])
+
+        result = start_validation_container(
+            file_path=payload["file"],
+            patched_content=payload["patchedContent"]
         )
-        del ACTIVE_CONTAINERS[
+
+        print(json.dumps(result))
+
+    elif command == "stop":
+        container_id = sys.argv[2]
+
+        result = stop_validation_container(
             container_id
-        ]
-    return {
-        "success": True,
-        "status": "stopped"
-    }
+        )
+
+        print(json.dumps(result))

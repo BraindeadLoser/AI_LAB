@@ -111,10 +111,6 @@ console.log(
   "[TOOL_EXECUTOR] validation errors:",
   result.validationResult?.errors
 );
-console.log(
-  "[TOOL_EXECUTOR] edit_pipeline result:",
-  result
-);
 
     if (
         result.success &&

@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const { execFile } = require("child_process");
 let win;
 let developMode = false;
 // Initialize database
@@ -99,7 +100,6 @@ ipcMain.handle("read-sandbox-file", async (event, filename) => {
   if (!allowedFiles.includes(filename)) {
     throw new Error("Access denied");
   }
-  const { execFile } = require("child_process");
   return new Promise((resolve) => {
     execFile(
       "python",
@@ -120,6 +120,155 @@ ipcMain.handle("read-sandbox-file", async (event, filename) => {
     );
   });
 });
+
+ipcMain.handle(
+  "start-validation-container",
+  async (event, payload) => {
+
+    return new Promise((resolve) => {
+
+      execFile(
+        "python",
+        [
+          "Tools/Docker_Tools/validation_container.py",
+          "start",
+          JSON.stringify(payload)
+        ],
+        (error, stdout, stderr) => {
+
+          if (error) {
+            resolve({
+              success: false,
+              status: "failed",
+              logs: [],
+              errors: [
+                stderr ||
+                error.message
+              ]
+            });
+
+            return;
+          }
+
+          try {
+            resolve(
+              JSON.parse(stdout)
+            );
+          } catch {
+            resolve({
+              success: false,
+              status: "failed",
+              logs: [],
+              errors: [
+                "Invalid validation response"
+              ]
+            });
+          }
+        }
+      );
+    });
+  }
+);
+
+ipcMain.handle(
+  "stop-validation-container",
+  async (
+    event,
+    containerId
+  ) => {
+
+    return new Promise((resolve) => {
+
+      execFile(
+        "python",
+        [
+          "Tools/Docker_Tools/validation_container.py",
+          "stop",
+          containerId
+        ],
+        (error, stdout) => {
+
+          if (error) {
+            resolve({
+              success: false,
+              status: "failed"
+            });
+
+            return;
+          }
+
+          try {
+            resolve(
+              JSON.parse(stdout)
+            );
+          } catch {
+            resolve({
+              success: false,
+              status: "failed"
+            });
+          }
+        }
+      );
+    });
+  }
+);
+
+ipcMain.handle(
+  "save-patched-file",
+  async (event, payload) => {
+
+    const fs =
+      require("fs/promises");
+
+    try {
+      const allowedFiles = [
+        "sample.py",
+        "sample.java",
+        "sample.go",
+        "sample.rb"
+      ];
+
+      if (
+        !allowedFiles.includes(
+          payload.file
+        )
+      ) {
+        throw new Error(
+          "Access denied"
+        );
+      }
+
+      const targetPath =
+        path.join(
+          "D:\\AI_LAB\\Test\\Docker-Testing",
+          payload.file
+        );
+
+      await fs.writeFile(
+        targetPath,
+        payload.content,
+        "utf8"
+      );
+
+      return {
+        success: true,
+        file:
+          payload.file,
+        status: "saved"
+      };
+
+    } catch (err) {
+
+      return {
+        success: false,
+        error:
+          err.message ||
+          String(err),
+        status: "failed"
+      };
+    }
+  }
+);
 
 app.commandLine.appendSwitch("remote-debugging-port", "9222");
 

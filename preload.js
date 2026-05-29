@@ -11,4 +11,22 @@ contextBridge.exposeInMainWorld("ipc", {
   listSandboxFiles: () => ipcRenderer.invoke("list-sandbox-files"),
   readSandboxFile: (filename) =>
     ipcRenderer.invoke("read-sandbox-file", filename),
+
+  startValidationContainer: (payload) =>
+  ipcRenderer.invoke(
+    "start-validation-container",
+    payload
+  ),
+
+stopValidationContainer: (containerId) =>
+  ipcRenderer.invoke(
+    "stop-validation-container",
+    containerId
+  ),
+
+  savePatchedFile: (payload) =>
+  ipcRenderer.invoke(
+    "save-patched-file",
+    payload
+  )
 });
