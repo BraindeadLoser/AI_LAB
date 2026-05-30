@@ -1,6 +1,16 @@
+go
 package main
 import "fmt"
 
 func main() {
-    fmt.Println("Hello, World!")
+    printFlower()
+}
+
+func printFlower() {
+    fmt.Println("   *")
+    fmt.Println("  ***")
+    fmt.Println(" *****")
+    fmt.Println("*******")
+    fmt.Println("  ***")
+    fmt.Println("   *")
 }
