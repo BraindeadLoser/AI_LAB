@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>File Explorer</title>
+  <style>
+    ul { list-style-type: none; }
+    li { cursor: pointer; margin: 4px 0; }
+    .folder { font-weight: bold; }
+    .file { color: blue; }
+  </style>
+</head>
+<body>
+  <h2>Collapsible File Tree</h2>
+  <div id="tree"></div>
+  <pre id="definition"></pre>
+
+  <script>
+    async function loadTree() {
+      const res = await fetch('/tree');
+      const tree = await res.json();
+      renderTree(tree, document.getElementById('tree'));
+    }
+
+    function renderTree(node, container) {
+      const ul = document.createElement('ul');
+      node.children?.forEach(child => {
+        const li = document.createElement('li');
+        li.textContent = child.name;
+        li.className = child.isFolder ? 'folder' : 'file';
+        if (child.isFolder) {
+          li.onclick = () => {
+            if (li.querySelector('ul')) {
+              li.removeChild(li.querySelector('ul'));
+            } else {
+              renderTree(child, li);
+            }
+          };
+        } else {
+          li.onclick = async () => {
+            const res = await fetch('/definition?path=' + child.name);
+            const def = await res.json();
+            document.getElementById('definition').textContent =
+              JSON.stringify(def, null, 2);
+          };
+        }
+        ul.appendChild(li);
+      });
+      container.appendChild(ul);
+    }
+
+    loadTree();
+  </script>
+</body>
+</html>
