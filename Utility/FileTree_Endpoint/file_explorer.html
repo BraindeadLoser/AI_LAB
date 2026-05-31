@@ -22,32 +22,88 @@
       renderTree(tree, document.getElementById('tree'));
     }
 
-    function renderTree(node, container) {
-      const ul = document.createElement('ul');
-      node.children?.forEach(child => {
-        const li = document.createElement('li');
-        li.textContent = child.name;
-        li.className = child.isFolder ? 'folder' : 'file';
-        if (child.isFolder) {
-          li.onclick = () => {
-            if (li.querySelector('ul')) {
-              li.removeChild(li.querySelector('ul'));
-            } else {
-              renderTree(child, li);
-            }
-          };
+function renderTree(node, container) {
+  const ul = document.createElement('ul');
+  node.children?.forEach(child => {
+    const li = document.createElement('li');
+
+    if (child.isFolder) {
+      // Folder node handling
+      li.textContent = ''; // Clear existing text
+
+      // Create toggle button
+      const toggleBtn = document.createElement('button');
+      toggleBtn.textContent = '+';
+      toggleBtn.style.marginRight = '6px';
+      toggleBtn.style.cursor = 'pointer';
+
+      // Create folder name span
+      const folderSpan = document.createElement('span');
+      folderSpan.textContent = child.name;
+      folderSpan.className = 'folder';
+
+      li.appendChild(toggleBtn);
+      li.appendChild(folderSpan);
+
+      let expanded = false;
+
+      toggleBtn.onclick = (e) => {
+        e.stopPropagation();
+
+        if (!expanded) {
+          if (!li.querySelector('ul')) {
+            renderTree(child, li);
+          } else {
+            li.querySelector('ul').style.display = 'block';
+          }
+          toggleBtn.textContent = '-';
+          expanded = true;
         } else {
-          li.onclick = async () => {
-            const res = await fetch('/definition?path=' + child.name);
-            const def = await res.json();
-            document.getElementById('definition').textContent =
-              JSON.stringify(def, null, 2);
-          };
+          if (li.querySelector('ul')) {
+            li.querySelector('ul').style.display = 'none';
+          }
+          toggleBtn.textContent = '+';
+          expanded = false;
         }
-        ul.appendChild(li);
-      });
-      container.appendChild(ul);
+      };
+    } else {
+      // File node handling
+      li.textContent = ''; // Clear existing text
+
+      // Create circular dot button
+      const dotBtn = document.createElement('button');
+      dotBtn.textContent = '●';
+      dotBtn.style.borderRadius = '50%';
+      dotBtn.style.width = '16px';
+      dotBtn.style.height = '16px';
+      dotBtn.style.padding = '0';
+      dotBtn.style.marginRight = '6px';
+      dotBtn.style.border = 'none';
+      dotBtn.style.backgroundColor = '#555';
+      dotBtn.style.color = 'white';
+      dotBtn.style.cursor = 'pointer';
+      dotBtn.title = 'Show definition';
+
+      // Create file name span
+      const fileSpan = document.createElement('span');
+      fileSpan.textContent = child.name;
+      fileSpan.className = 'file';
+
+      li.appendChild(dotBtn);
+      li.appendChild(fileSpan);
+
+      dotBtn.onclick = async (e) => {
+        e.stopPropagation();
+        const res = await fetch('/definition?path=' + encodeURIComponent(child.path));
+        const def = await res.json();
+        document.getElementById('definition').textContent = JSON.stringify(def, null, 2);
+      };
     }
+
+    ul.appendChild(li);
+  });
+  container.appendChild(ul);
+}
 
     loadTree();
   </script>

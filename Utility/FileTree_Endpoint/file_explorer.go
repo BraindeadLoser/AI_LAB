@@ -1,5 +1,5 @@
 package main
-
+import "regexp"
 import (
     "encoding/json"
     "fmt"
@@ -17,7 +17,7 @@ type FileNode struct {
     Children []*FileNode         `json:"children,omitempty"`
     Def      string              `json:"definition,omitempty"`
 }
-
+var asciiTreeChars = regexp.MustCompile(`[├└│─ ]+`)
 // runStructureUpdater executes your Python script to refresh file_tree.txt
 func runStructureUpdater() error {
     cmd := exec.Command("python", "D:\\AI_LAB\\Utility\\structure.py")
@@ -26,29 +26,37 @@ func runStructureUpdater() error {
 
 // parseFileTree reads file_tree.txt and builds a nested structure
 func parseFileTree() *FileNode {
-    data, err := ioutil.ReadFile("D:\\AI_LAB\\Structure\\file_tree.txt")
-    if err != nil {
-        fmt.Println("Error reading file_tree.txt:", err)
-        return nil
-    }
-
+    data, _ := ioutil.ReadFile("D:\\AI_LAB\\Structure\\file_tree.txt")
     lines := strings.Split(string(data), "\n")
+
     root := &FileNode{Name: "root", Path: "", IsFolder: true}
     stack := []*FileNode{root}
 
     for _, line := range lines {
-        line = strings.TrimSpace(line)
-        if line == "" {
+        if strings.TrimSpace(line) == "" {
             continue
         }
-        // crude detection: folder if ends with '/'
-        isFolder := strings.HasSuffix(line, "/")
-        name := strings.Trim(line, "├── │└─ ")
-        node := &FileNode{Name: name, Path: name, IsFolder: isFolder}
+        depth := strings.Count(line, "│") + strings.Count(line, "    ")
+// Clean line from ASCII tree symbols
+cleanName := asciiTreeChars.ReplaceAllString(line, "")
+cleanName = strings.TrimSpace(cleanName)
 
-        // attach to last folder in stack
-        parent := stack[len(stack)-1]
-        parent.Children = append(parent.Children, node)
+isFolder := strings.HasSuffix(cleanName, "/")
+
+// adjust stack depth
+if depth < len(stack) {
+    stack = stack[:depth+1]
+}
+parent := stack[len(stack)-1]
+
+node := &FileNode{
+    Name:     cleanName,
+    Path:     strings.TrimRight(parent.Path, "/") + "/" + cleanName,
+    IsFolder: isFolder,
+}
+
+parent.Children = append(parent.Children, node)
+
 
         if isFolder {
             stack = append(stack, node)
@@ -79,14 +87,17 @@ func definitionHandler(w http.ResponseWriter, r *http.Request) {
     if def == "" {
         def = "No description available"
     }
+
     resp := map[string]string{
         "file":       path,
-        "location":   "auto-fill from tree",
+        "location":   path,   // use the path string directly
         "definition": def,
     }
+
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(resp)
 }
+
 
 func main() {
     // Step 1: update file_tree.txt
