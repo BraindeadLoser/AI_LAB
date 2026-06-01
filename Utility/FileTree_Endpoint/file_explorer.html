@@ -94,7 +94,8 @@ function renderTree(node, container) {
 
       dotBtn.onclick = async (e) => {
         e.stopPropagation();
-        const res = await fetch('/definition?path=' + encodeURIComponent(child.path));
+        const baseName = child.name; // just the file name without folders
+        const res = await fetch('/definition?path=' + encodeURIComponent(baseName));
         const def = await res.json();
         document.getElementById('definition').textContent = JSON.stringify(def, null, 2);
       };
