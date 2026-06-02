@@ -1,4 +1,5 @@
-import { readSandboxFile } from "../Fetch_Files/file_access.js";
+
+import {readSandboxFile, readSandboxFileLines, readSandboxSymbol} from "../Fetch_Files/file_access.js";
 import { finalizeEdit } from "../Edit_Files/edit_pipeline.js";
 import {renderEditApprovalButtons} from "../UI/Buttons/editApprovalButtons.js";
 
@@ -9,59 +10,131 @@ export async function executeToolPipeline(
 ) {
     try {
 
-        const cleaned = aiResponse
-            .replace(/```json/g, "")
-            .replace(/```/g, "")
-            .trim();
+const cleaned = aiResponse
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
 
-        const toolCall = JSON.parse(cleaned);
+const jsonMatch =
+    cleaned.match(/\{[\s\S]*\}/);
 
-        if (
-            toolCall.tool === "file_access" &&
-            toolCall.action === "read"
-        ) {
+if (!jsonMatch) {
+    return aiResponse;
+}
 
-            const fileContent = await readSandboxFile(
-                toolCall.file
-            );
+let toolCall;
 
-            const secondPassMessages = [
-                ...finalMessages,
-                {
-                    role: "system",
-                    content:
-`REAL_FILE_CONTENT:
+try {
 
-FILE: ${fileContent.filename}
+    toolCall = JSON.parse(
+        jsonMatch[0]
+    );
 
-CONTENT:
-${fileContent.content}`
-                },
-                {
-                    role: "system",
-                    content:
-`CRITICAL INSTRUCTION:
+} catch {
 
-You now possess the REAL file contents retrieved from the sandbox.
+    return aiResponse;
+}
+        if (toolCall.tool === "file_access") {
 
-You MUST treat the sandbox content as the single source of truth.
+    let retrieval;
+    if (toolCall.action === "read") {
+retrieval =
+    await readSandboxFile(
+        toolCall.file
+    );
+
+console.log(
+    "[TOOL_EXECUTOR] retrieval:",
+    {
+        type: "read",
+        file: toolCall.file
+    }
+);
+
+    } else if (
+        toolCall.action === "read_lines"
+    ) {
+retrieval =
+    await readSandboxFileLines(
+        toolCall.file,
+        toolCall.startLine,
+        toolCall.endLine
+    );
+
+console.log(
+    "[TOOL_EXECUTOR] retrieval:",
+    {
+        type: "read_lines",
+        file: toolCall.file,
+        startLine:
+            toolCall.startLine,
+        endLine:
+            toolCall.endLine
+    }
+);
+    } else if (
+        toolCall.action === "read_symbol"
+    ) {
+retrieval =
+    await readSandboxSymbol(
+        toolCall.file,
+        toolCall.symbolName
+    );
+
+console.log(
+    "[TOOL_EXECUTOR] retrieval:",
+    {
+        type: "read_symbol",
+        file: toolCall.file,
+        symbolName:
+            toolCall.symbolName
+    }
+);
+    } else {
+        throw new Error(
+            "Unsupported file_access action"
+        );
+    }
+
+    const secondPassMessages = [
+        ...finalMessages,
+        {
+            role: "system",
+            content:
+`REAL_RETRIEVAL_RESULT:
+
+${JSON.stringify(
+    retrieval,
+    null,
+    2
+)}`
+        },
+        {
+            role: "system",
+            content:
+`CRITICAL GROUNDING POLICY
+
+REAL_RETRIEVAL_RESULT is the ONLY source of truth.
+
+You MUST:
+- answer ONLY from retrieved content
+- quote exact code when requested
+- explain implementation using retrieved data only
+- remain fully grounded
 
 You are STRICTLY FORBIDDEN from:
-- inventing file contents
-- using prior knowledge
-- generating example code
-- hallucinating placeholder scripts
+- inventing code
+- hallucinating unseen implementation
+- assuming missing behavior
+- filling gaps using prior knowledge
+- speculating about unseen files
 
-You MUST answer ONLY using the retrieved file contents.
+If requested information is absent:
+say so clearly.
 
-If the user asks for:
-- first line
-- exact content
-- code excerpts
-
-you MUST extract them EXACTLY from the REAL_FILE_CONTENT block.`
-                }
-            ];
+Never guess.`
+        }
+    ];
             console.log(JSON.stringify(secondPassMessages, null, 2));
             const secondResponse = await fetch(
                 "http://127.0.0.1:1234/v1/chat/completions",
@@ -139,7 +212,16 @@ console.log(
     );
 }
 
-    } catch (e) {}
+} catch (e) {
+
+    console.log(
+        "[TOOL_EXECUTOR] failure:",
+        e
+    );
+
+    typingDiv.innerText =
+        "Tool execution failed.";
 
     return aiResponse;
+}
 }

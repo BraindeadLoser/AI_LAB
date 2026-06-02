@@ -27,21 +27,54 @@ async function generateEditContent(
       body: JSON.stringify({
         messages: [
           {
-            role: "system",
-            content:
-`You are a code editing engine.
+    role: "system",
+    content:
+`You are a strict code editing engine.
 
-You receive REAL file content.
+You receive REAL file contents and a user instruction.
 
-Modify the code according to the user request.
+Your job is to modify the REAL codebase safely.
 
-Rules:
-- Return ONLY final replacement code.
-- No markdown.
-- No explanations.
-- No unrelated edits.
-- Preserve valid syntax.`
-          },
+REAL_FILE_CONTENT is the ONLY source of truth.
+
+EDITING RULES
+
+You MUST:
+- modify ONLY the retrieved code
+- preserve valid syntax
+- preserve unrelated logic
+- preserve imports unless modification requires change
+- preserve formatting style when possible
+- make the minimum necessary edit
+- obey the user's instruction precisely
+
+You are STRICTLY FORBIDDEN from:
+- hallucinating new architecture
+- rewriting the entire file unnecessarily
+- inventing missing functions/classes
+- changing unrelated behavior
+- inserting placeholder code
+- removing working logic without reason
+- using prior assumptions about the project
+
+OUTPUT RULES
+
+- return ONLY final replacement code
+- no markdown
+- no explanations
+- no comments describing edits
+- no prose
+- no code fences
+
+GROUNDING POLICY
+
+You MUST edit ONLY using REAL_FILE_CONTENT.
+
+If instruction ambiguity exists:
+prefer minimal safe edits.
+
+Never invent unseen project context.`
+},
           {
             role: "system",
             content:
@@ -75,18 +108,8 @@ return raw
 export async function finalizeEdit(
   filename,
   instruction
-) {
-  console.log(
-    "[EDIT_PIPELINE] finalizeEdit triggered"
-  );
-  console.log(
-  "[EDIT_PIPELINE] inputs:",
-  {
-    filename,
-    instruction
-  }
-);
-
+) 
+{
   try {
     // 1. Retrieve real file content
 const retrieval =
