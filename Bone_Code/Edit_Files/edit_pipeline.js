@@ -5,7 +5,7 @@ import { createPatch } from "../Edit_Files/patch_engine.js";
 import { applyPatch } from "../Edit_Files/apply_patch.js";
 import { runValidation } from "../Edit_Files/validation_runner.js";
 
-async function generateEditContent(
+export async function generateEditContent(
   retrieval,
   instruction
 ) {

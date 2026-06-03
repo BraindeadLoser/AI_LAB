@@ -15,6 +15,7 @@
 │   ├── Edit_Files/
 │   │   ├── apply_patch.js
 │   │   ├── edit_pipeline.js
+│   │   ├── error_capture.js
 │   │   ├── patch_engine.js
 │   │   ├── save_changes.js
 │   │   └── validation_runner.js

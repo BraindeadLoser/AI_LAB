@@ -193,11 +193,13 @@ console.log(
         typingDiv.innerText =
             "Edit proposed successfully. Review and approve.";
 
-        renderEditApprovalButtons(
-            typingDiv,
-            result.workingCopy,
-            result.validationResult.containerId
-        );
+    renderEditApprovalButtons(
+        typingDiv,
+        result.workingCopy,
+        result.validationResult.containerId,
+        result.retrieval,
+        toolCall.instruction
+    );
 
     } else {
 
