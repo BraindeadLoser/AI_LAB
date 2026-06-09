@@ -94,8 +94,6 @@
 │   │   └── file_explorer.py
 │   ├── structure.py
 │   └── update_git.py
-├── go.mod
-├── go.sum
 ├── main.js
 ├── package.json
 ├── preload.js

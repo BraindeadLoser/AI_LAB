@@ -108,10 +108,25 @@ retryButton.onclick =
 
     wrapper.remove();
 
+const retryInstruction = `
+${instruction}
+
+RETRY REQUEST
+
+The previous edit was not accepted.
+
+Re-evaluate the file and the instruction carefully.
+Produce a fresh edit attempt.
+
+Follow the original instruction exactly.
+Modify only what is necessary.
+Preserve unrelated code and behavior.
+`;
+
 const editedContent =
   await generateEditContent(
     retrieval,
-    instruction
+    retryInstruction
   );
 
 console.log(
