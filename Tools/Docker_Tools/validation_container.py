@@ -47,12 +47,32 @@ def start_validation_container(
             "container": container,
             "temp_dir": temp_dir
         }
+        result = container.wait()
+
+        logs = container.logs().decode(
+            "utf-8",
+            errors="replace"
+        )
+
+        exit_code = result.get(
+            "StatusCode",
+            1
+        )
+
         return {
-            "success": True,
-            "containerId": container.id,
-            "status": "running",
-            "logs": [],
+            "success": (
+                exit_code == 0
+            ),
+            "containerId":
+                container.id,
+            "status":
+                "completed"
+                if exit_code == 0
+                else "failed",
+            "logs": [logs],
             "errors": []
+                if exit_code == 0
+                else [logs]
         }
     except Exception as err:
         shutil.rmtree(

@@ -70,6 +70,13 @@ retryButton.innerText =
         result
       );
 
+      if (result.message) {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "validation-error-message";
+        msgDiv.textContent = result.message;
+        wrapper.appendChild(msgDiv);
+      }
+
       wrapper.remove();
     };
 

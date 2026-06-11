@@ -4,6 +4,9 @@ import {readSandboxFile} from "../Fetch_Files/file_access.js";
 import { createPatch } from "../Edit_Files/patch_engine.js";
 import { applyPatch } from "../Edit_Files/apply_patch.js";
 import { runValidation } from "../Edit_Files/validation_runner.js";
+import {stopValidation} from "../Edit_Files/validation_runner.js";
+import { captureError } from "../Edit_Files/error_capture.js";
+import { repairRequest } from "../AI/repair_request.js";
 
 export async function generateEditContent(
   retrieval,
@@ -141,16 +144,48 @@ const retrieval =
       await runValidation(
         workingCopy
       );
+      if (
+  validationResult.containerId
+) {
+  await stopValidation(
+    validationResult.containerId
+  );
+}
+    // 5.5. Capture validation error  
+    const capturedError =
+      captureError(
+        validationResult
+      );
+let repairedContent =
+  null;
 
-    // 6. Return orchestration result
-    return {
-      success: true,
-      retrieval,
+if (
+  capturedError.hasError
+) {
+  repairedContent =
+    await repairRequest({
+      originalContent:
+        retrieval.content,
+
       editedContent,
-      patch,
-      workingCopy,
-      validationResult
-    };
+
+      instruction,
+
+      errorText:
+        capturedError.errorText
+    });
+}
+    // 6. Return orchestration result
+return {
+  success: true,
+  retrieval,
+  editedContent,
+  patch,
+  workingCopy,
+  validationResult,
+  capturedError,
+  repairedContent
+};
 
   } catch (err) {
     console.error(

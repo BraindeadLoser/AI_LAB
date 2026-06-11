@@ -4,6 +4,7 @@
 │   ├── AI/
 │   │   ├── ai_client.js
 │   │   ├── prompt_builder.js
+│   │   ├── repair_request.js
 │   │   ├── stream_handler.js
 │   │   └── tool_executor.js
 │   ├── App_Flow/
@@ -17,6 +18,7 @@
 │   │   ├── edit_pipeline.js
 │   │   ├── error_capture.js
 │   │   ├── patch_engine.js
+│   │   ├── repair_loop.js
 │   │   ├── save_changes.js
 │   │   └── validation_runner.js
 │   ├── Fetch_Files/
@@ -48,15 +50,14 @@
 │   │   └── style.css
 │   ├── html/
 │   │   └── index.html
-│   ├── js/
-│   │   ├── Bridge.js
-│   │   ├── console.js
-│   │   ├── conversations.js
-│   │   ├── logSystem.js
-│   │   ├── renderer.js
-│   │   ├── storage.js
-│   │   └── test_pipelines.mjs
-│   └── python/
+│   └── js/
+│       ├── Bridge.js
+│       ├── console.js
+│       ├── conversations.js
+│       ├── logSystem.js
+│       ├── renderer.js
+│       ├── storage.js
+│       └── test_pipelines.mjs
 ├── Database/
 │   ├── db.js
 │   ├── file_descriptions.db
@@ -68,6 +69,7 @@
 │   └── docker-compose.yml
 ├── Progress Report.docx
 ├── README.md
+├── Recent Progress.docx
 ├── Structure/
 │   └── file_tree.txt
 ├── Test/
@@ -79,7 +81,10 @@
 │   │   └── sample.rb
 │   └── Simple_Tests/
 │       ├── edit_pipeline_test.py
-│       └── fileexplore.go
+│       ├── fileexplore.go
+│       ├── test_error_capture.js
+│       ├── test_repair_request.js
+│       └── test_validation.py
 ├── Tools/
 │   ├── Docker_Tools/
 │   │   └── validation_container.py
