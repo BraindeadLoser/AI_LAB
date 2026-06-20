@@ -41,10 +41,16 @@ async function updateDevelopMode(enabled) {
             // Update UI
             devBtn.classList.remove("dev-on");
             devBtn.classList.add("dev-off");
-            if (consoleDiv) {
-                consoleDiv.classList.add("hidden");
-                consoleDiv.innerHTML = ""; // Clear logs
-            }
+if (consoleDiv) {
+    consoleDiv.classList.add("hidden");
+
+    const logsContent =
+        document.getElementById("logs-content");
+
+    if (logsContent) {
+        logsContent.innerHTML = "";
+    }
+}
             devState = false;
             console.log("[DevMode] ✓ Develop mode DISABLED - Logging paused");
         }

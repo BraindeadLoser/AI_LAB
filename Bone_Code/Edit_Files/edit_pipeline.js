@@ -7,6 +7,7 @@ import { runValidation } from "../Edit_Files/validation_runner.js";
 import {stopValidation} from "../Edit_Files/validation_runner.js";
 import { captureError } from "../Edit_Files/error_capture.js";
 import { repairRequest } from "../AI/repair_request.js";
+import customConsole from "../js/console.js";
 
 export async function generateEditContent(
   retrieval,
@@ -135,9 +136,15 @@ const retrieval =
           editedContent
       });
 
-    // 4. Apply patch
-    const workingCopy =
-      applyPatch(patch);
+// 4. Apply patch
+const workingCopy =
+  applyPatch(patch);
+
+customConsole.renderDiff(
+  workingCopy.originalContent,
+  workingCopy.patchedContent,
+  workingCopy.file
+);
 
     // 5. Run validation
     const validationResult =

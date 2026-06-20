@@ -1,4 +1,3 @@
-// console.js
 class Console extends EventTarget {
   constructor() {
     super();
@@ -46,15 +45,84 @@ class Console extends EventTarget {
 
   // Render log entries into the bottom console panel
   render(entry) {
-    const consoleDiv = document.getElementById('bottom-console');
+    const consoleDiv = document.getElementById('logs-content');
     if (consoleDiv) {
       const line = document.createElement('pre');
       line.textContent = JSON.stringify(entry, null, 2);
       consoleDiv.appendChild(line);
-      consoleDiv.scrollTop = consoleDiv.scrollHeight; // auto-scroll
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
     }
   }
-}
 
+  renderDiff(originalContent, patchedContent, file) {
+    const diffContent =
+      document.getElementById('diff-content');
+
+    if (!diffContent) {
+      return;
+    }
+
+    const oldLines =
+      (originalContent || "").split("\n");
+
+    const newLines =
+      (patchedContent || "").split("\n");
+
+    const maxLines = Math.max(
+      oldLines.length,
+      newLines.length
+    );
+
+    let html = "";
+
+    html += `
+      <div class="diff-file-header">
+        File: ${file}
+      </div>
+    `;
+
+    for (let i = 0; i < maxLines; i++) {
+      const oldLine = oldLines[i];
+      const newLine = newLines[i];
+
+      if (oldLine === newLine) {
+        if (oldLine !== undefined) {
+          html += `
+            <div class="diff-line">
+              ${this.escapeHtml(oldLine)}
+            </div>
+          `;
+        }
+      } else {
+        if (oldLine !== undefined) {
+          html += `
+            <div class="diff-line removed">
+              ${this.escapeHtml(oldLine)}
+            </div>
+          `;
+        }
+
+        if (newLine !== undefined) {
+          html += `
+            <div class="diff-line added">
+              ${this.escapeHtml(newLine)}
+            </div>
+          `;
+        }
+      }
+    }
+
+    diffContent.innerHTML = html;
+   } 
+   
+   escapeHtml(text) {
+    const div =
+      document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+  }
+}
 // Export a singleton instance
 export default new Console();

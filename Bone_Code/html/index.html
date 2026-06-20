@@ -56,11 +56,37 @@
 <!-- Bottom console panel -->
 <div id="bottom-console" class="hidden"
      style="position:fixed; bottom:0; left:0; right:0;
-            height:200px; overflow:auto;
-            background:#111; color:#0f0;
-            font-size:12px; padding:5px;
-            border-top:2px solid #333; z-index:9999;">
-  <!-- Logs will appear here -->
+            height:200px;
+            background:#111;
+            border-top:2px solid #333;
+            z-index:9999;">
+
+  <div id="logs-panel">
+
+    <div class="panel-header">
+      Logs
+    </div>
+
+    <div id="logs-content">
+      <!-- Logs will appear here -->
+    </div>
+
+  </div>
+
+  <div id="console-divider"></div>
+
+  <div id="diff-panel">
+
+    <div class="panel-header">
+      Code Changes
+    </div>
+
+    <div id="diff-content">
+      Waiting for edits...
+    </div>
+
+  </div>
+
 </div>
 <script type="module" src="../js/storage.js"></script>
 <script type="module" src="../js/conversations.js"></script>
