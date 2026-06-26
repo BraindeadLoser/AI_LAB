@@ -1,4 +1,4 @@
-import customConsole from "../../js/console.js";
+import customConsole from "../../UI/Panels/console.js";
 
 function logToConsole(entry) {
   customConsole.log(

@@ -43,54 +43,39 @@
   </div>
   <div id="chat"></div>
 
-  <div id="inputArea">
+<div id="inputArea">
 <input type="text" id="input" placeholder="Send a message..." />
     <button id="sendBtn">Send</button>
+</div>
+
+<div id="bottom-console" class="hidden">
+  <div id="logs-panel">
+    <div class="panel-header">
+      Logs
+    </div>
+    <div id="logs-content">
+      <!-- Logs will appear here -->
+    </div>
   </div>
+  <div id="console-divider"></div>
+  <div id="diff-panel">
+    <div class="panel-header">
+      Code Changes
+    </div>
+    <div id="diff-content">
+      Waiting for edits...
+    </div>
+  </div>
+</div>
 </div>
 <div id="ai-suggestions"
      style="max-height:150px; overflow:auto; background:#222; color:#fff;
             font-size:12px; padding:5px; border-top:1px solid #555;">
   <!-- AI recommendations will appear here -->
 </div>
-<!-- Bottom console panel -->
-<div id="bottom-console" class="hidden"
-     style="position:fixed; bottom:0; left:0; right:0;
-            height:200px;
-            background:#111;
-            border-top:2px solid #333;
-            z-index:9999;">
-
-  <div id="logs-panel">
-
-    <div class="panel-header">
-      Logs
-    </div>
-
-    <div id="logs-content">
-      <!-- Logs will appear here -->
-    </div>
-
-  </div>
-
-  <div id="console-divider"></div>
-
-  <div id="diff-panel">
-
-    <div class="panel-header">
-      Code Changes
-    </div>
-
-    <div id="diff-content">
-      Waiting for edits...
-    </div>
-
-  </div>
-
-</div>
 <script type="module" src="../js/storage.js"></script>
 <script type="module" src="../js/conversations.js"></script>
-<script type="module" src="../js/console.js"></script>
+<script type="module" src="../UI/Panels/console.js"></script>
 <script type="module" src="../js/renderer.js"></script>
 </body>
 </html>

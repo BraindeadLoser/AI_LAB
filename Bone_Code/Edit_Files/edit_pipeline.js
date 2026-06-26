@@ -7,20 +7,12 @@ import { runValidation } from "../Edit_Files/validation_runner.js";
 import {stopValidation} from "../Edit_Files/validation_runner.js";
 import { captureError } from "../Edit_Files/error_capture.js";
 import { repairRequest } from "../AI/repair_request.js";
-import customConsole from "../js/console.js";
+import customConsole from "../UI/Panels/console.js";
 
 export async function generateEditContent(
   retrieval,
   instruction
 ) {
-  console.log(
-  "[EDIT_PIPELINE] LM input:",
-  {
-    retrievalContent:
-      retrieval?.content,
-    instruction
-  }
-);
   const response = await fetch(
     "http://127.0.0.1:1234/v1/chat/completions",
     {

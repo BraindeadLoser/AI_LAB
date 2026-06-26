@@ -50,7 +50,7 @@ export function enableResize() {
 
     const newWidth = e.clientX;
     sidebar.style.width = newWidth + "px";
-    main.style.marginLeft = newWidth + "px";
+    main.style.marginLeft = (newWidth + 20) + "px";
   });
 
   document.addEventListener("mouseup", () => {

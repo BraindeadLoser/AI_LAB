@@ -10,7 +10,7 @@ import { deleteConversation } from "./conversations.js";
 import {captureUserMessage,captureAIMessage} from "./logSystem.js";
 import { initializeDevelopMode } from "../Modes/Develop_mode/develop_mode.js";
 import { initializeConsoleToggle }
-from "../Modes/Develop_mode/console_toggle.js";
+from "../UI/Panels/console_toggle.js";
 import { logEvent } from "../Logging/Event_Logging/event_logger.js";
 import { buildBridgeContext } from "./Bridge.js";
 import { readSandboxFileLines } from "../Fetch_Files/file_access.js";

@@ -1,7 +1,9 @@
+import DiffEngine from "../../Algorithms/diff_algorithm/diff_engine.js";
 class Console extends EventTarget {
   constructor() {
     super();
     this.isDevelopMode = false;
+    this.diffEngine = new DiffEngine();
   }
 
   // Set develop mode state
@@ -62,17 +64,11 @@ class Console extends EventTarget {
       return;
     }
 
-    const oldLines =
-      (originalContent || "").split("\n");
-
-    const newLines =
-      (patchedContent || "").split("\n");
-
-    const maxLines = Math.max(
-      oldLines.length,
-      newLines.length
-    );
-
+const diffModel =
+  this.diffEngine.buildDiffModel(
+    originalContent,
+    patchedContent
+  );
     let html = "";
 
     html += `
@@ -81,34 +77,29 @@ class Console extends EventTarget {
       </div>
     `;
 
-    for (let i = 0; i < maxLines; i++) {
-      const oldLine = oldLines[i];
-      const newLine = newLines[i];
+    for (const item of diffModel) {
+      if (item.type === "unchanged") {
+        html += `
+          <div class="diff-line">
+            ${this.escapeHtml(item.text)}
+          </div>
+        `;
+      }
 
-      if (oldLine === newLine) {
-        if (oldLine !== undefined) {
-          html += `
-            <div class="diff-line">
-              ${this.escapeHtml(oldLine)}
-            </div>
-          `;
-        }
-      } else {
-        if (oldLine !== undefined) {
-          html += `
-            <div class="diff-line removed">
-              ${this.escapeHtml(oldLine)}
-            </div>
-          `;
-        }
+      if (item.type === "removed") {
+        html += `
+          <div class="diff-line removed">
+            ${this.escapeHtml(item.text)}
+          </div>
+        `;
+      }
 
-        if (newLine !== undefined) {
-          html += `
-            <div class="diff-line added">
-              ${this.escapeHtml(newLine)}
-            </div>
-          `;
-        }
+      if (item.type === "added") {
+        html += `
+          <div class="diff-line added">
+            ${this.escapeHtml(item.text)}
+          </div>
+        `;
       }
     }
 
