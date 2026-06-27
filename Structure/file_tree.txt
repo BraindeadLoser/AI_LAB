@@ -71,7 +71,6 @@
 ├── Dokerfiles/
 │   ├── Dockerfile
 │   └── docker-compose.yml
-├── LICENSE
 ├── Progress Report.docx
 ├── README.md
 ├── Structure/
