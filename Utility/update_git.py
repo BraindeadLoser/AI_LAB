@@ -30,6 +30,9 @@ def main():
     print("Running structure.py to refresh file_tree.txt...")
     run(f"python \"{STRUCTURE_SCRIPT}\"")
 
+    run("git fetch")
+    run("git pull")
+
     if not has_changes():
         print("No changes to commit.")
         return
