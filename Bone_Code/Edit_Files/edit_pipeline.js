@@ -7,6 +7,7 @@ import { runValidation } from "../Edit_Files/validation_runner.js";
 import {stopValidation} from "../Edit_Files/validation_runner.js";
 import { captureError } from "../Edit_Files/error_capture.js";
 import { repairRequest } from "../AI/repair_request.js";
+import { repairLoop } from "./repair_loop.js";
 import customConsole from "../UI/Panels/console.js";
 
 export async function generateEditContent(
@@ -149,29 +150,32 @@ customConsole.renderDiff(
   await stopValidation(
     validationResult.containerId
   );
-}
-    // 5.5. Capture validation error  
-    const capturedError =
-      captureError(
-        validationResult
-      );
-let repairedContent =
+}  
+// 5.5. Capture validation error
+const capturedError =
+  captureError(
+    validationResult
+  );
+  console.log(
+  "[EDIT_PIPELINE] capturedError:",
+  capturedError
+);
+
+let repairResult =
   null;
 
 if (
   capturedError.hasError
 ) {
-  repairedContent =
-    await repairRequest({
-      originalContent:
-        retrieval.content,
-
+  console.log(
+  "[EDIT_PIPELINE] Starting repair loop..."
+);
+  repairResult =
+    await repairLoop({
+      retrieval,
       editedContent,
-
       instruction,
-
-      errorText:
-        capturedError.errorText
+      validationResult
     });
 }
     // 6. Return orchestration result
@@ -183,7 +187,7 @@ return {
   workingCopy,
   validationResult,
   capturedError,
-  repairedContent
+  repairResult,
 };
 
   } catch (err) {

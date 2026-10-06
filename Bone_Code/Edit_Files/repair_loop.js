@@ -20,7 +20,11 @@ export async function repairLoop(
     instruction,
     validationResult
   }
-) {
+) { 
+    console.log(
+    "[REPAIR_LOOP] Entered"
+  );
+
   let currentContent =
     editedContent;
 
@@ -43,24 +47,34 @@ while (
     break;
   }
   attempts++;
-  currentContent =
-    await repairRequest({
-      originalContent:
-        retrieval.content,
+  console.log(
+  "[REPAIR_LOOP] Attempt:",
+  attempts + 1
+);
 
-      editedContent:
-        currentContent,
+console.log(
+  "[REPAIR_LOOP] Error:",
+  capturedError.errorText
+);
 
-      instruction,
+currentContent =
+  await repairRequest({
+    originalContent:
+      retrieval.content,
 
-      errorText:
-        capturedError.errorText
-    });
+    editedContent:
+      currentContent,
+
+    instruction,
+
+    errorText:
+      capturedError.errorText
+  });
 
   currentValidation =
     await runValidation({
       file:
-        retrieval.file,
+        retrieval.file || retrieval.filename,
 
       patchedContent:
         currentContent

@@ -185,27 +185,47 @@ console.log(
   result.validationResult?.errors
 );
 
-    if (
-        result.success &&
-        result.validationResult?.success
-    ) {
+const validationSucceeded =
+    result.validationResult?.success === true;
 
-        typingDiv.innerText =
-            "Edit proposed successfully. Review and approve.";
+const repairSucceeded =
+    result.repairResult?.success === true;
+
+if (
+    result.success &&
+    (validationSucceeded || repairSucceeded)
+) {
+
+    typingDiv.innerText =
+        "Edit proposed successfully. Review and approve.";
+
+    const finalWorkingCopy =
+        repairSucceeded
+            ? {
+                  ...result.workingCopy,
+                  patchedContent:
+                      result.repairResult.repairedContent
+              }
+            : result.workingCopy;
+
+    const finalValidation =
+        repairSucceeded
+            ? result.repairResult.validationResult
+            : result.validationResult;
 
     renderEditApprovalButtons(
         typingDiv,
-        result.workingCopy,
-        result.validationResult.containerId,
+        finalWorkingCopy,
+        finalValidation.containerId,
         result.retrieval,
         toolCall.instruction
     );
 
-    } else {
+} else {
 
-        typingDiv.innerText =
-            "Edit validation failed.";
-    }
+    typingDiv.innerText =
+        "Edit validation failed.";
+}
 
     return JSON.stringify(
         result,

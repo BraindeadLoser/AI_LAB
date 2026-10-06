@@ -11,18 +11,23 @@
 async function runValidation(
   workingCopy
 ) {
+  const normalizedWorkingCopy =
+    normalizeWorkingCopy(
+      workingCopy
+    );
+
   validateWorkingCopy(
-    workingCopy
+    normalizedWorkingCopy
   );
 
   try {
     const result =
       await window.ipc.startValidationContainer({
         file:
-          workingCopy.file,
+          normalizedWorkingCopy.file,
 
         patchedContent:
-          workingCopy.patchedContent
+          normalizedWorkingCopy.patchedContent
       });
 
     return {
@@ -80,6 +85,36 @@ async function stopValidation(
 /**
  * Validate working copy.
  */
+function normalizeWorkingCopy(
+  workingCopy
+) {
+  if (!workingCopy) {
+    return null;
+  }
+
+  const file =
+    typeof workingCopy.file === "string"
+      ? workingCopy.file
+      : typeof workingCopy.filename === "string"
+        ? workingCopy.filename
+        : typeof workingCopy.path === "string"
+          ? workingCopy.path
+          : null;
+
+  const patchedContent =
+    typeof workingCopy.patchedContent === "string"
+      ? workingCopy.patchedContent
+      : typeof workingCopy.content === "string"
+        ? workingCopy.content
+        : null;
+
+  return {
+    ...workingCopy,
+    file,
+    patchedContent
+  };
+}
+
 function validateWorkingCopy(
   workingCopy
 ) {
