@@ -1,0 +1,611 @@
+AI_WORK — COMPREHENSIVE PATH AUDIT
+Project root: D:\AI_LAB\AI_Work
+Mode: READ ONLY — no project files are modified
+
+
+FILE: Bone_Code\AI\ai_client.js
+  Line 1 [RELATIVE PATH]
+    import { handleStream } from "./stream_handler.js";
+  Line 6 [PORT]
+    "http://127.0.0.1:1234/v1/chat/completions",
+
+FILE: Bone_Code\AI\prompt_builder.js
+  Line 1 [RELATIVE PATH]
+    import { listAllowedFiles } from "../Fetch_Files/file_access.js";
+  Line 196 [PATH API]
+    ${listAllowedFiles().join("\n")}`
+
+FILE: Bone_Code\AI\repair_request.js
+  Line 13 [PORT]
+    "http://127.0.0.1:1234/v1/chat/completions",
+  Line 69 [PATH API, FILE WRITE/DELETE API]
+    .replace(/```python/g, "")
+  Line 70 [PATH API, FILE WRITE/DELETE API]
+    .replace(/```/g, "")
+
+FILE: Bone_Code\AI\tool_executor.js
+  Line 2 [RELATIVE PATH]
+    import {readSandboxFile, readSandboxFileLines, readSandboxSymbol} from "../Fetch_Files/file_access.js";
+  Line 3 [RELATIVE PATH]
+    import { finalizeEdit } from "../Edit_Files/edit_pipeline.js";
+  Line 4 [RELATIVE PATH]
+    import {renderEditApprovalButtons} from "../UI/Buttons/editApprovalButtons.js";
+  Line 14 [PATH API, FILE WRITE/DELETE API]
+    .replace(/```json/g, "")
+  Line 15 [PATH API, FILE WRITE/DELETE API]
+    .replace(/```/g, "")
+  Line 140 [PORT]
+    "http://127.0.0.1:1234/v1/chat/completions",
+
+FILE: Bone_Code\Algorithms\diff_algorithm\diff_engine.js
+  Line 13 [PATH API, FILE WRITE/DELETE API]
+    const oldText = (oldLines[i - 1] || "").replace(/\r/g, "");
+  Line 14 [PATH API, FILE WRITE/DELETE API]
+    const newText = (newLines[j - 1] || "").replace(/\r/g, "");
+  Line 36 [PATH API, FILE WRITE/DELETE API]
+    const oldText = (oldLines[i - 1] || "").replace(/\r/g, "");
+  Line 37 [PATH API, FILE WRITE/DELETE API]
+    const newText = (newLines[j - 1] || "").replace(/\r/g, "");
+
+FILE: Bone_Code\App_Flow\new_chat.js
+  Line 1 [RELATIVE PATH]
+    import { createConversation } from "../js/conversations.js";
+  Line 2 [RELATIVE PATH]
+    import { logEvent } from "../Logging/Event_Logging/event_logger.js";
+
+FILE: Bone_Code\App_Flow\restore_messages.js
+  Line 1 [RELATIVE PATH]
+    import { addMessage } from "../UI/Chat/chat_ui.js";
+
+FILE: Bone_Code\App_Flow\send_message.js
+  Line 1 [RELATIVE PATH]
+    import { sendToAI } from "../AI/ai_client.js";
+  Line 2 [RELATIVE PATH]
+    import { buildPrompt } from "../AI/prompt_builder.js";
+  Line 3 [RELATIVE PATH]
+    import { executeToolPipeline } from "../AI/tool_executor.js";
+  Line 4 [RELATIVE PATH]
+    import { createTypingIndicator, addMessage } from "../UI/Chat/chat_ui.js";
+  Line 5 [RELATIVE PATH]
+    import { buildBridgeContext } from "../js/Bridge.js";
+  Line 6 [RELATIVE PATH]
+    import { updateConversation } from "../js/conversations.js";
+  Line 7 [RELATIVE PATH]
+    import { logEvent } from "../Logging/Event_Logging/event_logger.js";
+
+FILE: Bone_Code\App_State\chat_state.js
+  Line 4 [RELATIVE PATH]
+    } from "../js/conversations.js";
+
+FILE: Bone_Code\Edit_Files\edit_pipeline.js
+  Line 3 [RELATIVE PATH]
+    import {readSandboxFile} from "../Fetch_Files/file_access.js";
+  Line 4 [RELATIVE PATH]
+    import { createPatch } from "../Edit_Files/patch_engine.js";
+  Line 5 [RELATIVE PATH]
+    import { applyPatch } from "../Edit_Files/apply_patch.js";
+  Line 6 [RELATIVE PATH]
+    import { runValidation } from "../Edit_Files/validation_runner.js";
+  Line 7 [RELATIVE PATH]
+    import {stopValidation} from "../Edit_Files/validation_runner.js";
+  Line 8 [RELATIVE PATH]
+    import { captureError } from "../Edit_Files/error_capture.js";
+  Line 9 [RELATIVE PATH]
+    import { repairRequest } from "../AI/repair_request.js";
+  Line 10 [RELATIVE PATH]
+    import { repairLoop } from "./repair_loop.js";
+  Line 11 [RELATIVE PATH]
+    import customConsole from "../UI/Panels/console.js";
+  Line 18 [PORT]
+    "http://127.0.0.1:1234/v1/chat/completions",
+  Line 100 [PATH API, FILE WRITE/DELETE API]
+    .replace(/```python/g, "")
+  Line 101 [PATH API, FILE WRITE/DELETE API]
+    .replace(/```/g, "")
+
+FILE: Bone_Code\Edit_Files\error_capture.js
+  Line 23 [PATH API]
+    ? validationResult.errors.join(
+
+FILE: Bone_Code\Edit_Files\repair_loop.js
+  Line 5 [RELATIVE PATH]
+    } from "./error_capture.js";
+  Line 9 [RELATIVE PATH]
+    } from "../AI/repair_request.js";
+  Line 14 [RELATIVE PATH]
+    } from "./validation_runner.js";
+
+FILE: Bone_Code\Edit_Files\save_changes.js
+  Line 5 [RELATIVE PATH]
+    } from "./validation_runner.js";
+
+FILE: Bone_Code\Edit_Files\validation_runner.js
+  Line 100 [PATH API]
+    : typeof workingCopy.path === "string"
+  Line 101 [PATH API]
+    ? workingCopy.path
+
+FILE: Bone_Code\Fetch_Files\file_access.js
+  Line 1 [RELATIVE PATH]
+    import {initializeRetrievalIndex, buildFileChunks, registerFile, retrieveSymbolContext} from "./retrieval_index.js";
+  Line 108 [PATH API]
+    content: selectedLines.join("\n")
+
+FILE: Bone_Code\Fetch_Files\retrieval_index.js
+  Line 1 [RELATIVE PATH]
+    import { parseSymbols } from "./symbol_parser.js";
+  Line 142 [PATH API]
+    content: selected.join("\n")
+
+FILE: Bone_Code\html\index.html
+  Line 5 [RELATIVE PATH]
+    <link rel="stylesheet" href="../css/style.css">
+  Line 76 [RELATIVE PATH]
+    <script type="module" src="../js/storage.js"></script>
+  Line 77 [RELATIVE PATH]
+    <script type="module" src="../js/conversations.js"></script>
+  Line 78 [RELATIVE PATH]
+    <script type="module" src="../UI/Panels/console.js"></script>
+  Line 79 [RELATIVE PATH]
+    <script type="module" src="../js/renderer.js"></script>
+
+FILE: Bone_Code\js\conversations.js
+  Line 1 [RELATIVE PATH]
+    import { loadConversations } from "./storage.js";
+  Line 2 [RELATIVE PATH]
+    import { saveConversations } from "./storage.js";
+
+FILE: Bone_Code\js\logSystem.js
+  Line 3 [RELATIVE PATH]
+    captureUnhandledPromiseEvent, visualizeEvent} from "../Logging/Event_Logging/event_logger.js";
+
+FILE: Bone_Code\js\renderer.js
+  Line 1 [RELATIVE PATH]
+    import { sendToAI } from "../AI/ai_client.js";
+  Line 2 [RELATIVE PATH]
+    import { buildPrompt } from "../AI/prompt_builder.js";
+  Line 3 [RELATIVE PATH]
+    import { executeToolPipeline } from "../AI/tool_executor.js";
+  Line 4 [RELATIVE PATH]
+    import {renderConversations,toggleSidebar,enableResize,initializeSidebar} from "../UI/Panels/sidebar_ui.js";
+  Line 5 [RELATIVE PATH]
+    import {addMessage,createTypingIndicator} from "../UI/Chat/chat_ui.js";
+  Line 6 [RELATIVE PATH]
+    import { initializeTheme } from "../UI/Customization/theme_ui.js";
+  Line 7 [RELATIVE PATH]
+    import { createConversation, updateConversation } from "./conversations.js";
+  Line 8 [RELATIVE PATH]
+    import { getAllConversations } from "./conversations.js";
+  Line 9 [RELATIVE PATH]
+    import { deleteConversation } from "./conversations.js";
+  Line 10 [RELATIVE PATH]
+    import {captureUserMessage,captureAIMessage} from "./logSystem.js";
+  Line 11 [RELATIVE PATH]
+    import { initializeDevelopMode } from "../Modes/Develop_mode/develop_mode.js";
+  Line 13 [RELATIVE PATH]
+    from "../UI/Panels/console_toggle.js";
+  Line 14 [RELATIVE PATH]
+    import { logEvent } from "../Logging/Event_Logging/event_logger.js";
+  Line 15 [RELATIVE PATH]
+    import { buildBridgeContext } from "./Bridge.js";
+  Line 16 [RELATIVE PATH]
+    import { readSandboxFileLines } from "../Fetch_Files/file_access.js";
+  Line 18 [RELATIVE PATH]
+    import { finalizeEdit } from "../Edit_Files/edit_pipeline.js";
+
+FILE: Bone_Code\js\test_pipelines.mjs
+  Line 1 [RELATIVE PATH]
+    import { initializeRetrievalIndex, registerFile } from "./Fetch_Files/retrieval_index.js";
+  Line 9 [RELATIVE PATH, PATH API]
+    const content = await fs.readFile("./js/sample.py", "utf-8");
+
+FILE: Bone_Code\Logging\Event_Logging\event_logger.js
+  Line 1 [RELATIVE PATH]
+    import customConsole from "../../UI/Panels/console.js";
+
+FILE: Bone_Code\Modes\Develop_mode\develop_mode.js
+  Line 1 [RELATIVE PATH]
+    import customConsole from "../../UI/Panels/console.js";
+  Line 5 [RELATIVE PATH]
+    } from "../../js/logSystem.js";
+  Line 7 [RELATIVE PATH]
+    from "../../Logging/Event_Logging/event_logger.js";
+  Line 26 [PATH API, FILE WRITE/DELETE API]
+    devBtn.classList.remove("dev-off");
+  Line 29 [PATH API, FILE WRITE/DELETE API]
+    consoleDiv.classList.remove("hidden");
+  Line 42 [PATH API, FILE WRITE/DELETE API]
+    devBtn.classList.remove("dev-on");
+
+FILE: Bone_Code\UI\Buttons\editApprovalButtons.js
+  Line 6 [RELATIVE PATH]
+    } from "../../Edit_Files/save_changes.js";
+  Line 10 [RELATIVE PATH]
+    } from "../../Edit_Files/edit_pipeline.js";
+  Line 14 [RELATIVE PATH]
+    } from "../../Edit_Files/patch_engine.js";
+  Line 18 [RELATIVE PATH]
+    } from "../../Edit_Files/apply_patch.js";
+  Line 22 [RELATIVE PATH]
+    } from "../../Edit_Files/validation_runner.js";
+  Line 80 [PATH API, FILE WRITE/DELETE API]
+    wrapper.remove();
+  Line 96 [PATH API, FILE WRITE/DELETE API]
+    wrapper.remove();
+  Line 116 [PATH API, FILE WRITE/DELETE API]
+    wrapper.remove();
+
+FILE: Bone_Code\UI\Customization\theme_ui.js
+  Line 4 [RELATIVE PATH]
+    } from "../../js/storage.js";
+
+FILE: Bone_Code\UI\Event_Bindings\keyboard_events.js
+  Line 2 [RELATIVE PATH]
+    from "../../Logging/Event_Logging/event_logger.js";
+
+FILE: Bone_Code\UI\Panels\console.js
+  Line 1 [RELATIVE PATH]
+    import DiffEngine from "../../Algorithms/diff_algorithm/diff_engine.js";
+
+FILE: Bone_Code\UI\Panels\console_toggle.js
+  Line 9 [PATH API, FILE WRITE/DELETE API]
+    consoleDiv.classList.remove("hidden");
+
+FILE: Bone_Code\UI\Panels\sidebar_ui.js
+  Line 5 [RELATIVE PATH]
+    } from "../../js/conversations.js";
+  Line 160 [PATH API]
+    renameOption.innerText = "Rename";
+
+FILE: Database\db.js
+  Line 1 [ABSOLUTE PATH]
+    // D:\AI_LAB\Database\db.js
+  Line 3 [PATH API]
+    const path = require('path');
+  Line 5 [PATH API]
+    // Path to logs.db inside Database folder
+  Line 6 [PATH API]
+    const dbPath = path.join(__dirname, 'logs.db');
+
+FILE: Database\retrieve.py
+  Line 3 [PATH API]
+    from pathlib import Path
+  Line 5 [PATH API]
+    # Database path
+  Line 6 [PATH API]
+    db_path = Path(__file__).parent / 'log_events.db'
+
+FILE: main.js
+  Line 3 [PATH API]
+    const path = require("path");
+  Line 4 [PATH API]
+    const { execFile } = require("child_process");
+  Line 8 [PATH API]
+    const dbPath = path.join(__dirname, "Database", "log_events.db");
+  Line 25 [PATH API]
+    preload: path.join(__dirname, "preload.js"),
+  Line 31 [RELATIVE PATH]
+    win.loadFile("Bone_Code/html/index.html");
+  Line 53 [PATH API]
+    return new Promise((resolve) => {
+  Line 60 [PATH API]
+    resolve({ success: false, error: err.message });
+  Line 62 [PATH API]
+    resolve({ success: true });
+  Line 69 [PATH API]
+    return new Promise((resolve) => {
+  Line 76 [PATH API]
+    resolve([]);
+  Line 78 [PATH API]
+    resolve(rows || []);
+  Line 103 [PATH API]
+    return new Promise((resolve) => {
+  Line 104 [PATH API]
+    execFile(
+  Line 106 [RELATIVE PATH]
+    ["Tools/docker_testing.py", "read", filename],
+  Line 110 [PATH API]
+    resolve("ERROR: Sandbox not available");
+  Line 115 [PATH API]
+    resolve("ERROR: Sandbox not available");
+  Line 118 [PATH API]
+    resolve(stdout);
+  Line 128 [PATH API]
+    return new Promise((resolve) => {
+  Line 130 [PATH API]
+    execFile(
+  Line 133 [RELATIVE PATH]
+    "Tools/Docker_Tools/validation_container.py",
+  Line 140 [PATH API]
+    resolve({
+  Line 154 [PATH API]
+    resolve(
+  Line 158 [PATH API]
+    resolve({
+  Line 180 [PATH API]
+    return new Promise((resolve) => {
+  Line 182 [PATH API]
+    execFile(
+  Line 185 [RELATIVE PATH]
+    "Tools/Docker_Tools/validation_container.py",
+  Line 192 [PATH API]
+    resolve({
+  Line 201 [PATH API]
+    resolve(
+  Line 205 [PATH API]
+    resolve({
+  Line 242 [PATH API]
+    path.join(
+  Line 243 [ABSOLUTE PATH]
+    "D:\\AI_LAB\\Test\\Docker-Testing",
+  Line 247 [PATH API, FILE WRITE/DELETE API]
+    await fs.writeFile(
+
+FILE: package-lock.json
+  Line 109 [PATH API]
+    "file-uri-to-path": "1.0.0"
+  Line 323 [PATH API]
+    "node_modules/file-uri-to-path": {
+  Line 325 [PATH API]
+    "resolved": "https://registry.npmjs.org/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz",
+
+FILE: runtime_inspector.py
+  Line 1 [PATH API]
+    import os, subprocess, time
+  Line 3 [ABSOLUTE PATH]
+    APP_DIR = r"D:\AI_LAB"
+  Line 5 [PATH API]
+    "main.js": os.path.join(APP_DIR, "main.js"),
+  Line 6 [PATH API]
+    "index.html": os.path.join(APP_DIR, "Bone_Code", "html", "index.html"),
+  Line 7 [PATH API]
+    "preload.js": os.path.join(APP_DIR, "preload.js"),
+  Line 8 [PATH API]
+    "renderer.js": os.path.join(APP_DIR, "Bone_Code", "js", "renderer.js"),
+  Line 9 [PATH API]
+    "file_access.js": os.path.join(APP_DIR, "Bone_Code", "js", "Fetch_Files", "file_access.js"),
+  Line 14 [PATH API]
+    for name, path in FILES.items():
+  Line 15 [PATH API]
+    print(f"{name}: {os.path.exists(path)} -> {path}")
+  Line 17 [PATH API]
+    for name, path in FILES.items():
+  Line 18 [PATH API]
+    if os.path.exists(path):
+  Line 19 [PATH API, FILE WRITE/DELETE API]
+    with open(path, encoding="utf-8", errors="ignore") as f:
+  Line 23 [PATH API, FILE WRITE/DELETE API]
+    if "ipcRenderer.invoke" in content and "ipcMain.handle" not in open(FILES["main.js"], encoding="utf-8", errors="ignore").read():
+  Line 27 [PATH API]
+    electron_bin = os.path.join(APP_DIR, "node_modules", ".bin", "electron.cmd")
+  Line 30 [PATH API]
+    proc = subprocess.Popen(
+  Line 32 [PATH API]
+    cwd=APP_DIR,
+  Line 33 [PATH API]
+    stdout=subprocess.PIPE,
+  Line 34 [PATH API]
+    stderr=subprocess.PIPE,
+
+FILE: Test\Simple_Tests\edit_pipeline_test.py
+  Line 11 [PATH API]
+    "[ACTION] Open app and click inside chat input box."
+
+FILE: Test\Simple_Tests\test_error_capture.js
+  Line 5 [RELATIVE PATH]
+    } = require("../../Bone_Code/Edit_Files/error_capture.js");
+
+FILE: Test\Simple_Tests\test_repair_request.js
+  Line 5 [RELATIVE PATH]
+    } = require("../../Bone_Code/AI/repair_request.js");
+
+FILE: Test\Simple_Tests\test_validation.py
+  Line 6 [PATH API]
+    # Add Docker_Tools directory to path
+  Line 7 [RELATIVE PATH, PATH API]
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../Tools/Docker_Tools'))
+
+FILE: test_exec.js
+  Line 2 [PATH API]
+    const { execFile } = require("child_process");
+  Line 4 [RELATIVE PATH, PATH API]
+    execFile("python", ["Tools/docker_testing.py", "read", "sample.py"], (error, stdout, stderr) => {
+
+FILE: Tools\docker_testing.py
+  Line 1 [PATH API]
+    import subprocess
+  Line 4 [ABSOLUTE PATH]
+    DOCKER_CONTEXT = r"D:\AI_LAB\Test\Docker-Testing"
+  Line 8 [PATH API]
+    subprocess.run([
+  Line 11 [PATH API]
+    "-f", os.path.join(DOCKER_CONTEXT, "Dockerfile"),
+  Line 15 [PATH API]
+    subprocess.run(
+  Line 17 [PATH API]
+    stderr=subprocess.DEVNULL
+  Line 20 [PATH API]
+    subprocess.run(
+  Line 22 [PATH API]
+    stderr=subprocess.DEVNULL
+  Line 25 [PATH API]
+    subprocess.run([
+  Line 35 [PATH API]
+    subprocess.run([
+  Line 40 [PATH API]
+    subprocess.run([
+  Line 45 [PATH API]
+    result = subprocess.run([
+  Line 51 [PATH API]
+    subprocess.run([
+  Line 56 [PATH API]
+    result = subprocess.run([
+  Line 95 [PATH API]
+    result = subprocess.run(
+
+FILE: Tools\Docker_Tools\validation_container.py
+  Line 10 [PATH API]
+    ext = os.path.splitext(filename)[1].lower()
+  Line 32 [PATH API]
+    f"java -cp /workspace {os.path.splitext(f)[0]}"
+  Line 91 [PATH API]
+    filename = os.path.basename(file_path)
+  Line 98 [PATH API, FILE WRITE/DELETE API]
+    shutil.rmtree(
+  Line 112 [PATH API]
+    temp_file_path = os.path.join(
+  Line 117 [PATH API, FILE WRITE/DELETE API]
+    with open(
+  Line 155 [PATH API]
+    errors="replace"
+  Line 185 [PATH API, FILE WRITE/DELETE API]
+    shutil.rmtree(
+  Line 203 [PATH API]
+    Stop and remove validation container.
+  Line 215 [PATH API, FILE WRITE/DELETE API]
+    container.remove(
+
+FILE: Tools\inspector.py
+  Line 2 [PATH API]
+    import subprocess
+  Line 8 [PATH API]
+    result = subprocess.run(
+  Line 63 [ABSOLUTE PATH]
+    test_path = r"D:\AI_LAB\Sandbox\sample.py"
+  Line 65 [PATH API, FILE WRITE/DELETE API]
+    with open(test_path, "r", encoding="utf-8") as f:
+  Line 76 [ABSOLUTE PATH]
+    search_root = r"D:\AI_LAB"
+  Line 80 [PATH API]
+    matches.append(os.path.join(root, "sample.py"))
+
+FILE: Tools\refresh_db.py
+  Line 4 [ABSOLUTE PATH]
+    DB_PATH = r"D:\AI_LAB\Database\log_events.db"
+  Line 7 [PATH API]
+    if not os.path.exists(DB_PATH):
+
+FILE: Tools\test_docker_read.py
+  Line 1 [PATH API]
+    import subprocess
+  Line 6 [PATH API]
+    result = subprocess.run(
+
+FILE: Utility\FileTree_Endpoint\DB_Reader.py
+  Line 4 [ABSOLUTE PATH]
+    DB_PATH = r"D:\AI_LAB\Database\file_descriptions.db"
+  Line 5 [ABSOLUTE PATH]
+    FILE_TREE_PATH = r"D:\AI_LAB\Structure\file_tree.txt"
+  Line 8 [PATH API, FILE WRITE/DELETE API]
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+  Line 23 [PATH API, FILE WRITE/DELETE API]
+    with open(FILE_TREE_PATH, 'r', encoding='utf-8') as f:
+
+FILE: Utility\FileTree_Endpoint\file_explorer.html
+  Line 98 [PATH API]
+    const res = await fetch('/definition?path=' + encodeURIComponent(baseName));
+
+FILE: Utility\FileTree_Endpoint\file_explorer.py
+  Line 3 [PATH API]
+    import subprocess
+  Line 11 [ABSOLUTE PATH]
+    FILE_TREE_PATH = r"D:\AI_LAB\Structure\file_tree.txt"
+  Line 12 [ABSOLUTE PATH]
+    PYTHON_SCRIPT_PATH = r"D:\AI_LAB\Utility\structure.py"
+  Line 13 [ABSOLUTE PATH]
+    DB_PATH = r"D:\AI_LAB\Database\file_descriptions.db"
+  Line 14 [ABSOLUTE PATH]
+    STATIC_DIR = r"D:\AI_LAB\Utility\FileTree_Endpoint"
+  Line 18 [PATH API]
+    def __init__(self, name, path, is_folder):
+  Line 20 [PATH API]
+    self.path = path
+  Line 27 [PATH API]
+    "path": self.path,
+  Line 36 [PATH API]
+    result = subprocess.run(["python", PYTHON_SCRIPT_PATH], capture_output=True, text=True)
+  Line 42 [PATH API, FILE WRITE/DELETE API]
+    with open(FILE_TREE_PATH, "r", encoding="utf-8") as f:
+  Line 60 [PATH API, FILE WRITE/DELETE API]
+    node_path = os.path.join(parent.path, clean_name).replace("\\", "/")
+  Line 83 [PATH API]
+    """Recursively search tree for a file and return its full path"""
+  Line 85 [PATH API]
+    return node.path
+  Line 105 [PATH API]
+    full_path = request.args.get("path")
+  Line 107 [PATH API]
+    return jsonify({"error": "Missing path parameter"}), 400
+  Line 109 [ABSOLUTE PATH]
+    root_dir = r"D:\AI_LAB"
+  Line 111 [PATH API]
+    # If full_path is just a filename, search the tree to find its complete path
+  Line 119 [PATH API]
+    # Build absolute path by tracing navigation from root
+  Line 121 [PATH API, FILE WRITE/DELETE API]
+    abs_path = os.path.normpath(os.path.join(root_dir, *parts)).replace("\\", "/")
+  Line 123 [PATH API]
+    file_name = os.path.basename(full_path)
+  Line 136 [PATH API]
+    @app.route("/<path:filename>")
+  Line 146 [PORT]
+    app.run(host="0.0.0.0", port=3000)
+
+FILE: Utility\structure.py
+  Line 2 [PATH API]
+    from pathlib import Path
+  Line 5 [PATH API]
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+  Line 20 [PATH API]
+    root_dir = Path(root_dir)
+  Line 49 [PATH API]
+    scan_path = Path(scan_path).resolve() if scan_path else PROJECT_ROOT
+  Line 50 [PATH API]
+    output_path = Path(output_path).resolve() if output_path else OUTPUT_PATH
+  Line 54 [PATH API]
+    raise ValueError("Scan path must be inside AI_Work.")
+  Line 57 [PATH API]
+    raise ValueError("Output path must be inside AI_Work.")
+  Line 59 [PATH API, FILE WRITE/DELETE API]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+  Line 62 [PATH API, FILE WRITE/DELETE API]
+    output_path.write_text(
+  Line 63 [PATH API]
+    "\n".join(tree) + "\n",
+
+FILE: Utility\update_git.py
+  Line 1 [PATH API]
+    import subprocess
+  Line 3 [PATH API]
+    from pathlib import Path
+  Line 6 [ABSOLUTE PATH]
+    STRUCTURE_SCRIPT = r"D:\AI_LAB\Utility\structure.py"
+  Line 7 [ABSOLUTE PATH, PATH API]
+    FILE_TREE_PATH = Path(r"D:\AI_LAB\Structure\file_tree.txt")
+  Line 10 [PATH API]
+    return subprocess.run(cmd, shell=True, text=True, capture_output=True)
+  Line 19 [PATH API, FILE WRITE/DELETE API]
+    with FILE_TREE_PATH.open("r") as f:
+  Line 24 [PATH API, FILE WRITE/DELETE API]
+    path = line.replace("├──", "").replace("└──", "").strip()
+  Line 25 [PATH API]
+    if path and path not in IGNORED_PATHS:
+  Line 26 [PATH API]
+    paths.append(path)
+  Line 42 [PATH API]
+    for path in tracked_paths:
+  Line 43 [PATH API]
+    run(f"git add {path}")
+  Line 45 [PATH API]
+    for path in IGNORED_PATHS:
+  Line 46 [PATH API]
+    run(f"git reset {path}")
+
+========== SUMMARY ==========
+Files scanned: 65
+Files containing findings: 49
+Total matching lines: 250
+
+NOTE:
+This report identifies candidate references, not confirmed defects.
+Review each finding before changing any path.
