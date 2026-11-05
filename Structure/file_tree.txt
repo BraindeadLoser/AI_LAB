@@ -74,7 +74,6 @@
 ├── File_Automation/
 │   ├── docx_automation/
 │   └── ppt_automation/
-│       ├── generate_intro.py
 │       ├── generate_pptx.py
 │       ├── generate_topic2.py
 │       └── generate_topic3.py
