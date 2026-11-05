@@ -113,6 +113,7 @@
 │   │   └── file_explorer.py
 │   ├── Recovery/
 │   │   └── ai-work_recovery.py
+│   ├── merge_branches.py
 │   ├── structure.py
 │   ├── update_git.py
 │   └── update_git_ai_work.py
