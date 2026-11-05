@@ -95,23 +95,47 @@ def verify_branch():
 # WORKING TREE VERIFICATION
 # --------------------------------------------------
 
+
 def verify_clean_working_tree():
 
     result = run_git(
         "status",
         "--porcelain",
-        "--untracked-files=all"
+        "--untracked-files=normal"
     )
 
-    if result.stdout.strip():
+    changes = result.stdout.splitlines()
+
+    allowed_untracked = {
+        "venv",
+        "node_modules"
+    }
+
+    unexpected_changes = []
+
+    for line in changes:
+
+        status = line[:2]
+        path = line[3:].strip().replace("\\", "/")
+
+        # Permit only the two excluded,
+        # untracked dependency directories.
+        if status == "??":
+            if path.rstrip("/") in allowed_untracked:
+                continue
+
+        unexpected_changes.append(line)
+
+    if unexpected_changes:
 
         raise RuntimeError(
-            "Uncommitted changes detected.\n"
-            "Commit or safely preserve these changes "
-            "before recovery."
+            "Unexpected uncommitted changes detected:\n"
+            + "\n".join(unexpected_changes)
+            + "\nPreserve or resolve these changes before recovery."
         )
 
-    print("Working tree is clean.")
+    print("Working tree verified. Only excluded directories remain.")
+
 
 
 # --------------------------------------------------
