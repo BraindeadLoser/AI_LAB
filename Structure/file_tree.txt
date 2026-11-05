@@ -71,6 +71,13 @@
 ├── Dokerfiles/
 │   ├── Dockerfile
 │   └── docker-compose.yml
+├── File_Automation/
+│   ├── docx_automation/
+│   └── ppt_automation/
+│       ├── generate_intro.py
+│       ├── generate_pptx.py
+│       ├── generate_topic2.py
+│       └── generate_topic3.py
 ├── LICENSE
 ├── Progress Report.docx
 ├── README.md
@@ -92,6 +99,9 @@
 ├── Tools/
 │   ├── Docker_Tools/
 │   │   └── validation_container.py
+│   ├── Quick_Tools/
+│   │   ├── File_Path_Audits.py
+│   │   └── path_audit_report.txt
 │   ├── docker_testing.py
 │   ├── inspector.py
 │   ├── refresh_db.py
@@ -101,8 +111,12 @@
 │   │   ├── DB_Reader.py
 │   │   ├── file_explorer.html
 │   │   └── file_explorer.py
+│   ├── Recovery/
+│   │   └── ai-work_recovery.py
+│   ├── merge_branches.py
 │   ├── structure.py
-│   └── update_git.py
+│   ├── update_git.py
+│   └── update_git_ai_work.py
 ├── main.js
 ├── package.json
 ├── preload.js
