@@ -67,7 +67,7 @@ try {
   const bridge = await buildBridgeContext(msg);
 
   // Step 2: Base system rules
-const finalMessages = buildPrompt(
+const finalMessages = await buildPrompt(
     messages,
     bridge
 );

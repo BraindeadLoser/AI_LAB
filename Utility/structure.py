@@ -11,7 +11,8 @@ def build_file_tree(root_dir, prefix=""):
         return prefix + "[Permission Denied]\n"
 
     # Exclude venv and node_modules folders
-    items = [i for i in items if i.lower() not in ["venv", "node_modules", ".git", "__pycache__", "package-lock.json"]]
+    items = [i for i in items if i.lower() not in ["venv", "node_modules", ".git",
+    "__pycache__", "package-lock.json", ".gitignore", ".editorconfig"]]
 
     for index, item in enumerate(items):
         path = os.path.join(root_dir, item)

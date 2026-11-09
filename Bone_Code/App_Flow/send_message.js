@@ -52,7 +52,7 @@ export async function sendMessage({
 
         const bridge = await buildBridgeContext(msg);
 
-        const finalMessages = buildPrompt(
+        const finalMessages = await buildPrompt(
             messages,
             bridge
         );

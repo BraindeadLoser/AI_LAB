@@ -5,10 +5,14 @@ contextBridge.exposeInMainWorld("ipc", {
   enableDevelopMode: () => ipcRenderer.invoke("enable-develop-mode"),
   disableDevelopMode: () => ipcRenderer.invoke("disable-develop-mode"),
   getDevelopMode: () => ipcRenderer.invoke("get-develop-mode"),
+  getProjectFileTree: () =>
+    ipcRenderer.invoke("get-project-file-tree"),
   addLog: (entry) => ipcRenderer.invoke("add-log", entry),
   getLogs: (limit) => ipcRenderer.invoke("get-logs", limit),
   getRecentLogs: (limit) => ipcRenderer.invoke("get-logs", limit),
   listSandboxFiles: () => ipcRenderer.invoke("list-sandbox-files"),
+  synchronizeProjectFiles: () =>
+    ipcRenderer.invoke("synchronize-project-files"),
   readSandboxFile: (filename) =>
     ipcRenderer.invoke("read-sandbox-file", filename),
 

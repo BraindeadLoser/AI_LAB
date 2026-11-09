@@ -1,5 +1,5 @@
-├── .editorconfig
-├── .gitignore
+├── .github/
+│   └── FUNDING.yml
 ├── Bone_Code/
 │   ├── AI/
 │   │   ├── ai_client.js
@@ -27,6 +27,7 @@
 │   │   └── validation_runner.js
 │   ├── Fetch_Files/
 │   │   ├── file_access.js
+│   │   ├── file_synchronization.js
 │   │   ├── retrieval_index.js
 │   │   └── symbol_parser.js
 │   ├── Logging/

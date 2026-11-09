@@ -29,6 +29,10 @@ try {
     toolCall = JSON.parse(
         jsonMatch[0]
     );
+    console.log(
+    "[TOOL_EXECUTOR] received toolCall:",
+    JSON.stringify(toolCall, null, 2)
+);
 
 } catch {
 

@@ -1,80 +1,144 @@
-import {initializeRetrievalIndex, buildFileChunks, registerFile, retrieveSymbolContext} from "./retrieval_index.js";
-// Bone_Code/js/file_access.js
-const ALLOWED_FILES = [
-  "sample.py",
-  "sample.java",
-  "sample.go",
-  "sample.rb"
-];
+import {
+    initializeRetrievalIndex,
+    buildFileChunks,
+    registerFile,
+    retrieveSymbolContext
+} from "./retrieval_index.js";
 
-// Return safe enumerated list of accessible sandbox files
-export function listAllowedFiles() {
-  return [...ALLOWED_FILES];
+import {
+    getAccessibleFiles
+} from "./file_synchronization.js";
+
+// Cache of currently accessible project files.
+let ALLOWED_FILES = new Set();
+
+/**
+ * Refresh the accessible file inventory.
+ * Generates a fresh file_tree.txt through file_synchronization.js.
+ */
+async function refreshAllowedFiles() {
+    const files = await getAccessibleFiles();
+
+    ALLOWED_FILES = new Set(
+        files.map(filename =>
+            filename.replace(/\\/g, "/")
+        )
+    );
+
+    return [...ALLOWED_FILES];
 }
-// Raw IPC reader (no indexing, no recursion)
-async function rawReadSandboxFile(filename) {
-  if (!isAllowedFile(filename)) {
-    throw new Error("Access denied");
-  }
-  return await window.ipc.readSandboxFile(filename);
+
+/**
+ * Return the current list of accessible files.
+ */
+export async function listAllowedFiles() {
+    return await refreshAllowedFiles();
 }
-// Validate whitelist membership
-export function isAllowedFile(filename) {
-  return ALLOWED_FILES.includes(filename);
-}
-// Secure retrieval through IPC → main.js → docker_testing.py
-export async function readSandboxFile(filename) {
-  if (!isAllowedFile(filename)) {
-    throw new Error("Access denied");
-  }
-const index = initializeRetrievalIndex();
 
-const content = await rawReadSandboxFile(filename);
-
-await buildFileChunks(
-    index,
-    filename,
-    content,
-    20
-);
-
-await registerFile(
-    index,
-    filename,
-    content
-);
-
-  try {
-    const lines = content.split(/\r?\n/);
-    // Guard: if Docker is unreachable or returns empty
-    if (!content || content.trim().length === 0) {
-      return {
-        filename,
-        content: "ERROR: Sandbox not available"
-      };
+/**
+ * Validate whether a file belongs to the accessible inventory.
+ */
+export async function isAllowedFile(filename) {
+    if (typeof filename !== "string" || !filename.trim()) {
+        return false;
     }
-    return {
-      filename,
-      content
-    };
-  } catch (err) {
-    // Catch IPC/Docker errors cleanly
-    return {
-      filename,
-      content: `ERROR: Retrieval failed (${err.message || err})`
-    };
-  }
-}
-//
-export async function readSandboxFileLines(filename, startLine, endLine) {
 
-    if (!isAllowedFile(filename)) {
+    const normalized = filename.replace(/\\/g, "/");
+
+    if (
+        normalized.startsWith("/") ||
+        normalized.split("/").includes("..")
+    ) {
+        return false;
+    }
+
+    await refreshAllowedFiles();
+
+    return ALLOWED_FILES.has(normalized);
+}
+
+/**
+ * Raw IPC reader.
+ * No indexing or recursion.
+ */
+async function rawReadSandboxFile(filename) {
+    if (!(await isAllowedFile(filename))) {
+        throw new Error("Access denied");
+    }
+
+    return await window.ipc.readSandboxFile(filename);
+}
+
+/**
+ * Retrieve complete file content and register it
+ * with the retrieval index.
+ */
+export async function readSandboxFile(filename) {
+    try {
+        if (!(await isAllowedFile(filename))) {
+            throw new Error("Access denied");
+        }
+
+        const content = await rawReadSandboxFile(filename);
+
+        if (
+            !content ||
+            content.startsWith("ERROR:") ||
+            content.trim().length === 0
+        ) {
+            return {
+                filename,
+                content: "ERROR: Sandbox not available"
+            };
+        }
+
+        const index = initializeRetrievalIndex();
+
+        await buildFileChunks(
+            index,
+            filename,
+            content,
+            20
+        );
+
+        await registerFile(
+            index,
+            filename,
+            content
+        );
+
+        return {
+            filename,
+            content
+        };
+
+    } catch (err) {
+        console.error("File retrieval failed:", err);
+
+        return {
+            filename,
+            content: `ERROR: Retrieval failed (${err.message || err})`
+        };
+    }
+}
+
+/**
+ * Retrieve a specific line range from a file.
+ */
+export async function readSandboxFileLines(
+    filename,
+    startLine,
+    endLine
+) {
+    if (!(await isAllowedFile(filename))) {
         throw new Error("Access denied");
     }
 
     if (
         typeof startLine !== "number" ||
-        typeof endLine !== "number"
+        typeof endLine !== "number" ||
+        !Number.isInteger(startLine) ||
+        !Number.isInteger(endLine)
     ) {
         throw new Error("Invalid line range");
     }
@@ -82,24 +146,24 @@ export async function readSandboxFileLines(filename, startLine, endLine) {
     if (startLine < 1 || endLine < startLine) {
         throw new Error("Invalid line boundaries");
     }
-  // Retrieve full content first (could optimize later with line-based retrieval in Docker)
+
     const content = await rawReadSandboxFile(filename);
 
     if (
         !content ||
         content.startsWith("ERROR:")
     ) {
-      console.log("RAW CONTENT:", content);
         throw new Error("Sandbox retrieval failed");
     }
-// Guard: if requested range exceeds file length, adjust gracefully
-const lines = content.split(/\r?\n/);
-const selectedLines = lines
-    .slice(startLine - 1, endLine)
-    .map((line, index) => {
-        const actualLine = startLine + index;
-        return `${actualLine}: ${line}`;
-    });
+
+    const lines = content.split(/\r?\n/);
+
+    const selectedLines = lines
+        .slice(startLine - 1, endLine)
+        .map((line, index) => {
+            const actualLine = startLine + index;
+            return `${actualLine}: ${line}`;
+        });
 
     return {
         file: filename,
@@ -109,19 +173,27 @@ const selectedLines = lines
     };
 }
 
+/**
+ * Retrieve context surrounding a particular symbol.
+ */
 export async function readSandboxSymbol(
     filename,
     symbolName
 ) {
-
-    if (!isAllowedFile(filename)) {
+    if (!(await isAllowedFile(filename))) {
         throw new Error("Access denied");
     }
 
-    const index = initializeRetrievalIndex();
+    const content = await rawReadSandboxFile(filename);
 
-    const content =
-        await rawReadSandboxFile(filename);
+    if (
+        !content ||
+        content.startsWith("ERROR:")
+    ) {
+        throw new Error("Sandbox retrieval failed");
+    }
+
+    const index = initializeRetrievalIndex();
 
     await buildFileChunks(
         index,
@@ -155,4 +227,3 @@ export async function readSandboxSymbol(
         ...result
     };
 }
-

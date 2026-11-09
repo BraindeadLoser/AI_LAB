@@ -1,9 +1,46 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const fs = require("fs/promises");
 const { execFile } = require("child_process");
 let win;
 let developMode = false;
+const FILE_TREE_EXCLUDED_ITEMS = new Set([
+  "venv",
+  "node_modules",
+  ".git",
+  "__pycache__",
+  "package-lock.json",
+  ".gitignore",
+  ".editorconfig"
+]);
+
+async function buildProjectFileTree(directory, prefix = "") {
+  const entries = (await fs.readdir(directory, { withFileTypes: true }))
+    .filter(entry => !FILE_TREE_EXCLUDED_ITEMS.has(entry.name.toLowerCase()))
+    .sort((left, right) => left.name.localeCompare(right.name));
+
+  let tree = "";
+
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index];
+    const isLast = index === entries.length - 1;
+    const connector = isLast ? "└── " : "├── ";
+
+    tree += `${prefix}${connector}${entry.name}${entry.isDirectory() ? "/" : ""}\n`;
+
+    if (entry.isDirectory()) {
+      const childPrefix = prefix + (isLast ? "    " : "│   ");
+      tree += await buildProjectFileTree(
+        path.join(directory, entry.name),
+        childPrefix
+      );
+    }
+  }
+
+  return tree;
+}
+
 // Initialize database
 const dbPath = path.join(__dirname, "Database", "log_events.db");
 const db = new sqlite3.Database(dbPath);
@@ -41,6 +78,23 @@ ipcMain.handle("disable-develop-mode", () => {
 });
 ipcMain.handle("get-develop-mode", () => {
   return developMode;
+});
+ipcMain.handle("get-project-file-tree", async () => {
+  try {
+    const tree = await buildProjectFileTree(__dirname);
+    const treePath = path.join(__dirname, "Structure", "file_tree.txt");
+    await fs.mkdir(path.dirname(treePath), { recursive: true });
+    await fs.writeFile(treePath, tree, "utf8");
+    return tree;
+  } catch (error) {
+    console.error(
+      "Project file tree generation failed:",
+      error.message || error
+    );
+    throw new Error(
+      `Unable to generate the project file tree: ${error.message || error}`
+    );
+  }
 });
 ipcMain.handle("add-log", (event, entry) => {
   if (!developMode) return;
@@ -90,35 +144,95 @@ ipcMain.handle("list-sandbox-files", async () => {
         "sample.rb"
     ];
 });
+
+ipcMain.handle("synchronize-project-files", async () => {
+    return new Promise((resolve, reject) => {
+        execFile(
+            "python",
+            ["Tools/docker_testing.py", "sync"],
+            {
+                cwd: __dirname,
+                windowsHide: true
+            },
+            (error, stdout, stderr) => {
+                if (error) {
+                    console.error(
+                        "Project synchronization failed:",
+                        stderr || error.message
+                    );
+
+                    reject(
+                        new Error("Project synchronization failed")
+                    );
+                    return;
+                }
+
+                resolve(stdout.trim());
+            }
+        );
+    });
+});
+
 ipcMain.handle("read-sandbox-file", async (event, filename) => {
-  const allowedFiles = [
-    "sample.py",
-    "sample.java",
-    "sample.go",
-    "sample.rb"
-  ];
-  if (!allowedFiles.includes(filename)) {
-    throw new Error("Access denied");
-  }
-  return new Promise((resolve) => {
-    execFile(
-      "python",
-      ["Tools/docker_testing.py", "read", filename],
-      (error, stdout, stderr) => {
-        if (error) {
-          console.error("Docker retrieval error:", stderr || error.message);
-          resolve("ERROR: Sandbox not available");
-          return;
-        }
-        if (!stdout || stdout.trim().length === 0) {
-          console.warn("Docker returned empty output for", filename);
-          resolve("ERROR: Sandbox not available");
-          return;
-        }
-        resolve(stdout);
-      }
-    );
-  });
+    // Validate the relative project path.
+    if (
+        typeof filename !== "string" ||
+        !filename.trim()
+    ) {
+        throw new Error("Invalid filename");
+    }
+
+    const normalizedPath = filename.replace(/\\/g, "/");
+
+    if (
+        normalizedPath.startsWith("/") ||
+        /^[a-zA-Z]:/.test(normalizedPath) ||
+        normalizedPath.split("/").some(
+            part => part === ".." || part === ""
+        )
+    ) {
+        throw new Error("Access denied");
+    }
+
+    return new Promise((resolve) => {
+        execFile(
+            "python",
+            [
+                "Tools/docker_testing.py",
+                "read",
+                normalizedPath
+            ],
+            {
+                cwd: __dirname,
+                windowsHide: true
+            },
+            (error, stdout, stderr) => {
+                if (error) {
+                    console.error(
+                        "Docker retrieval error:",
+                        stderr || error.message
+                    );
+
+                    resolve(
+                        "ERROR: Sandbox not available"
+                    );
+                    return;
+                }
+
+                if (
+                    !stdout ||
+                    stdout.trim().length === 0
+                ) {
+                    resolve(
+                        "ERROR: Sandbox not available"
+                    );
+                    return;
+                }
+
+                resolve(stdout);
+            }
+        );
+    });
 });
 
 ipcMain.handle(

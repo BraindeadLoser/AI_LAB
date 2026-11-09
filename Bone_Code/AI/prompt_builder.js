@@ -1,6 +1,7 @@
 import { listAllowedFiles } from "../Fetch_Files/file_access.js";
 
-export function buildPrompt(messages, bridge) {
+export async function buildPrompt(messages, bridge) {
+    const allowedFiles = await listAllowedFiles();
 
     let systemRules = `
 You are an AI assistant.
@@ -193,7 +194,7 @@ Never hallucinate codebase state.
 Unsupported schemas are forbidden.
 
 Available files:
-${listAllowedFiles().join("\n")}`
+${allowedFiles.join("\n")}`
 }
     ];
 
